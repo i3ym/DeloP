@@ -19,6 +19,8 @@ namespace Painter
             var tools = Enumerable.Empty<ITool>()
                 .Append(new PencilTool())
                 .Append(new BrushTool())
+                .Append(new RectangeTool())
+                .Append(new TriangleTool())
                 .Select(x => new ToolDrawable(x) { RelativeSizeAxes = Axes.Both })
                 .ToArray();
 

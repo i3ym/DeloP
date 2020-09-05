@@ -5,18 +5,16 @@ using osu.Framework.Graphics.Textures;
 using osu.Framework.Input.Events;
 using osu.Framework.Platform;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.Primitives;
 
 namespace Painter
 {
     public class Canvas : CompositeDrawable
     {
         readonly IWindow Window;
-        readonly Sprite Sprite;
+        readonly Sprite Sprite, OverlaySprite;
         public Image<Rgba32> Image { get; private set; }
-        Texture Texture;
+        public Image<Rgba32> OverlayImage { get; private set; }
         bool IsDrawing = false;
 
         public Rgba32 CurrentColor;
@@ -26,13 +24,18 @@ namespace Painter
         {
             Window = window;
             Image = new Image<Rgba32>(Configuration.Default, 100, 100, Color.White);
+            OverlayImage = new Image<Rgba32>(Configuration.Default, 100, 100, Color.Transparent);
 
             Height = Image.Height;
             Width = Image.Width;
 
             Sprite = new Sprite();
             Sprite.RelativeSizeAxes = Axes.Both;
-            Sprite.Texture = Texture = new Texture(Image.Width, Image.Height, true, osuTK.Graphics.ES30.All.Nearest);
+            Sprite.Texture = new Texture(Image.Width, Image.Height, true, osuTK.Graphics.ES30.All.Nearest);
+
+            OverlaySprite = new Sprite();
+            OverlaySprite.RelativeSizeAxes = Axes.Both;
+            OverlaySprite.Texture = new Texture(OverlayImage.Width, OverlayImage.Height, true, osuTK.Graphics.ES30.All.Nearest);
 
             CurrentColor = Color.Black;
         }
@@ -40,7 +43,12 @@ namespace Painter
         {
             base.LoadComplete();
 
-            InternalChild = Sprite;
+            InternalChildren = new Drawable[]
+            {
+                Sprite,
+                OverlaySprite
+            };
+
             UpdateImage();
         }
 
@@ -102,6 +110,7 @@ namespace Painter
                 UpdateImage();
         }
 
-        public void UpdateImage() => Texture.SetData(new TextureUpload(Image.Clone()));
+        public void UpdateImage() => Sprite.Texture.SetData(new TextureUpload(Image.Clone()));
+        public void UpdateOverlay() => OverlaySprite.Texture.SetData(new TextureUpload(OverlayImage.Clone()));
     }
 }
