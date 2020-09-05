@@ -1,10 +1,12 @@
 using osu.Framework.Graphics;
+using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 
 namespace Painter
 {
     public class MainScreen : osu.Framework.Game
     {
+        ToolPanel ToolPanel = null!;
         Canvas Canvas = null!;
 
         public MainScreen()
@@ -18,10 +20,24 @@ namespace Painter
             Children = new Drawable[]
             {
                 new Box() { Colour = Colour4.DarkGray, RelativeSizeAxes = Axes.Both },
-                Canvas = new Canvas(Window)
+                new GridContainer()
+                {
+                    ColumnDimensions = new [] { new Dimension(GridSizeMode.Absolute, 100), new Dimension(GridSizeMode.AutoSize) },
+                    Content = new Drawable[][]
+                    {
+                        new Drawable[]
+                        {
+                            ToolPanel = new ToolPanel() { RelativeSizeAxes = Axes.Both },
+                            Canvas = new Canvas(Window)
+                        },
+                    },
+                    RelativeSizeAxes = Axes.Both
+                }
             };
 
             Canvas.Scale = new osuTK.Vector2(10, 10);
+
+            ToolPanel.OnChoose += t => Canvas.CurrentTool = t;
         }
     }
 }

@@ -15,23 +15,12 @@ namespace Painter
     {
         readonly IWindow Window;
         readonly Sprite Sprite;
-        Image<Rgba32> Image;
+        public Image<Rgba32> Image { get; private set; }
         Texture Texture;
         bool IsDrawing = false;
 
-        readonly GraphicsOptions Options = new GraphicsOptions(false);
-
-        Rgba32 _CurrentColor;
-        Rgba32 CurrentColor
-        {
-            get => _CurrentColor;
-            set
-            {
-                _CurrentColor = value;
-                Pen = new Pen(value, Pen.StrokeWidth);
-            }
-        }
-        Pen Pen;
+        public Rgba32 CurrentColor;
+        public ITool CurrentTool = new PencilTool();
 
         public Canvas(IWindow window)
         {
@@ -45,7 +34,7 @@ namespace Painter
             Sprite.RelativeSizeAxes = Axes.Both;
             Sprite.Texture = Texture = new Texture(Image.Width, Image.Height, true, osuTK.Graphics.ES30.All.Nearest);
 
-            Pen = new Pen(Color.Black, 1);
+            CurrentColor = Color.Black;
         }
         protected override void LoadComplete()
         {
@@ -55,14 +44,18 @@ namespace Painter
             UpdateImage();
         }
 
+        #region move listener
+
+        int LastMouseX, LastMouseY;
         protected override bool OnMouseDown(MouseDownEvent e)
         {
             if (base.OnMouseDown(e)) return true;
 
             IsDrawing = true;
+            (LastMouseX, LastMouseY) = ((int) e.MouseDownPosition.X, (int) e.MouseDownPosition.Y);
 
             var (x, y) = ToImagePosition((int) e.MouseDownPosition.X, (int) e.MouseDownPosition.Y);
-            DrawLine(x, y, x, y);
+            CurrentTool.OnStart(x, y, this);
 
             return false;
         }
@@ -70,26 +63,32 @@ namespace Painter
         {
             base.OnMouseUp(e);
             IsDrawing = false;
+
+            var (sx, sy) = ToImagePosition((int) e.MouseDownPosition.X, (int) e.MouseDownPosition.Y);
+            var (ex, ey) = ToImagePosition((int) e.MousePosition.X, (int) e.MousePosition.Y);
+            CurrentTool.OnEnd(sx, sy, ex, ey, this);
         }
         protected override bool OnMouseMove(MouseMoveEvent e)
         {
             if (base.OnMouseMove(e)) return true;
             if (!IsDrawing) return false;
 
-            var (x, y) = ToImagePosition((int) e.LastMousePosition.X, (int) e.LastMousePosition.Y);
+            var (x, y) = ToImagePosition((int) LastMouseX, (int) LastMouseY);
             var (tx, ty) = ToImagePosition((int) e.MousePosition.X, (int) e.MousePosition.Y);
 
-            DrawLine(x, y, tx, ty);
+            (LastMouseX, LastMouseY) = ((int) e.MousePosition.X, (int) e.MousePosition.Y);
+            CurrentTool.OnMove(x, y, tx, ty, this);
             return false;
         }
 
+        #endregion
 
         (int x, int y) ToImagePosition(int mousex, int mousey) =>
             (
                 (int) (mousex / Scale.X / Sprite.DrawWidth * Image.Width),
                 (int) (mousey / Scale.Y / Sprite.DrawHeight * Image.Height) + 1
             );
-        bool DrawPixelWithoutUpdate(int x, int y)
+        public bool DrawPixelWithoutUpdate(int x, int y)
         {
             if (x < 0 || y < 0 || x >= Image.Width || y >= Image.Height) return false;
             if (Image[x, y] == CurrentColor) return false;
@@ -97,18 +96,12 @@ namespace Painter
             Image[x, y] = CurrentColor;
             return true;
         }
-        void DrawPixel(int x, int y)
+        public void DrawPixel(int x, int y)
         {
             if (DrawPixelWithoutUpdate(x, y))
                 UpdateImage();
         }
-        void DrawLine(int x, int y, int tx, int ty)
-        {
-            var points = new[] { new PointF(x, y), new PointF(tx, ty) };
-            Image.Mutate(ctx => ctx.DrawLines(Options, Pen, points));
 
-            UpdateImage();
-        }
-        void UpdateImage() => Texture.SetData(new TextureUpload(Image.Clone()));
+        public void UpdateImage() => Texture.SetData(new TextureUpload(Image.Clone()));
     }
 }
