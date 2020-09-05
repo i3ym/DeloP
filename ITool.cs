@@ -92,4 +92,13 @@ namespace Painter
                 new PointF(endX, endY)
             };
     }
+    public class LineTool : ShapeTool
+    {
+        protected override PointF[] GetPath(int startX, int startY, int endX, int endY) =>
+            new[]
+            {
+                new PointF(startX, startY),
+                new PointF(endX, endY)
+            };
+    }
 }
