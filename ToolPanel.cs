@@ -30,7 +30,7 @@ namespace Painter
 
             var toolsGrid = tools
                 .Select((x, i) => (x, i))
-                .GroupBy(x => x.i % 2)
+                .GroupBy(x => x.i / 2)
                 .Select(x => x.Select(x => x.x).ToArray())
                 .ToArray();
 
@@ -55,7 +55,7 @@ namespace Painter
                 var button = new ToolButton(e => OnChoose(Tool));
                 button.RelativeSizeAxes = Axes.Both;
 
-                button.Text = tool.GetType().Name;
+                button.Text = tool.GetType().Name.Replace("Tool", "");
 
                 InternalChild = button;
             }
@@ -65,11 +65,7 @@ namespace Painter
             {
                 readonly Action<ClickEvent> ClickAction;
 
-                public ToolButton(Action<ClickEvent> onClick)
-                {
-                    ClickAction = onClick;
-                    BackgroundColour = Colour4.Green;
-                }
+                public ToolButton(Action<ClickEvent> onClick) => ClickAction = onClick;
 
                 protected override bool OnClick(ClickEvent e)
                 {
