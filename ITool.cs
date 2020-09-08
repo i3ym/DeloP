@@ -1,7 +1,9 @@
+using System.Collections.Concurrent;
 using System;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Advanced;
 using SixLabors.ImageSharp.PixelFormats;
+using System.Collections.Generic;
 
 namespace Painter
 {
@@ -127,7 +129,6 @@ namespace Painter
             }
         }
     }
-
     public abstract class PolygonShapeTool : ShapeTool
     {
         protected override void Draw(int startX, int startY, int endX, int endY, Image<Rgba32> image, Rgba32 color)
@@ -164,5 +165,70 @@ namespace Painter
     {
         protected override void DrawOverride(int startX, int startY, int endX, int endY, Image<Rgba32> image, Rgba32 color) =>
             DrawLine(startX, startY, endX, endY, image, color, Thickness);
+    }
+
+    public class FillTool : ITool
+    {
+        public float Thickness { get; set; }
+
+        public void OnStart(int x, int y, Canvas canvas)
+        {
+            Fill(x, y, canvas.Image, canvas.CurrentColor);
+            canvas.UpdateImage();
+        }
+        public void OnEnd(int sx, int sy, int ex, int ey, Canvas canvas) { }
+        public void OnMove(int sx, int sy, int ex, int ey, Canvas canvas)
+        {
+            Fill(ex, ey, canvas.Image, canvas.CurrentColor);
+            canvas.UpdateImage();
+        }
+
+
+        static readonly Queue<FromPoint> CachedQueue = new Queue<FromPoint>();
+        public static void Fill(int x, int y, Image<Rgba32> image, Rgba32 color)
+        {
+            if (image[x, y] == color) return;
+            var bg = image[x, y];
+
+            CachedQueue.Clear();
+            CachedQueue.Enqueue(new FromPoint(x, y, 0, 0));
+
+            var ct = new Constrained(image);
+            while (CachedQueue.Count != 0)
+            {
+                var point = CachedQueue.Dequeue();
+                if (ct[point.X, point.Y] != bg) continue;
+
+                ct[point.X, point.Y] = color;
+                point.AddPoints(CachedQueue);
+            }
+        }
+        readonly struct FromPoint
+        {
+            public readonly int X, Y, FromX, FromY;
+
+            public FromPoint(int x, int y, int fromX, int fromY)
+            {
+                X = x;
+                Y = y;
+                FromX = fromX;
+                FromY = fromY;
+            }
+
+            public void AddPoints(Queue<FromPoint> points)
+            {
+                if (FromX != 1) points.Enqueue(new FromPoint(X + 1, Y, -FromX, FromY));
+                if (FromX != -1) points.Enqueue(new FromPoint(X - 1, Y, -FromX, FromY));
+                if (FromY != 1) points.Enqueue(new FromPoint(X, Y + 1, -FromX, FromY));
+                if (FromY != -1) points.Enqueue(new FromPoint(X, Y - 1, -FromX, FromY));
+            }
+            public void AddPoints(ConcurrentQueue<FromPoint> points)
+            {
+                if (FromX != 1) points.Enqueue(new FromPoint(X + 1, Y, -FromX, FromY));
+                if (FromX != -1) points.Enqueue(new FromPoint(X - 1, Y, -FromX, FromY));
+                if (FromY != 1) points.Enqueue(new FromPoint(X, Y + 1, -FromX, FromY));
+                if (FromY != -1) points.Enqueue(new FromPoint(X, Y - 1, -FromX, FromY));
+            }
+        }
     }
 }

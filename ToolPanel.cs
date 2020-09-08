@@ -21,6 +21,7 @@ namespace Painter
                 .Append(new LineTool())
                 .Append(new RectangeTool())
                 .Append(new TriangleTool())
+                .Append(new FillTool())
                 .Select(x => { x.Thickness = 5f; return x; })
                 .Select(x => new ToolDrawable(x) { RelativeSizeAxes = Axes.Both })
                 .ToArray();
