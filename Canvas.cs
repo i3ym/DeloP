@@ -5,6 +5,7 @@ using osu.Framework.Graphics.Textures;
 using osu.Framework.Input.Events;
 using osu.Framework.Platform;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Advanced;
 using SixLabors.ImageSharp.PixelFormats;
 
 namespace Painter
@@ -23,8 +24,8 @@ namespace Painter
         public Canvas(IWindow window)
         {
             Window = window;
-            Image = new Image<Rgba32>(Configuration.Default, 100, 100, Color.White);
-            OverlayImage = new Image<Rgba32>(Configuration.Default, 100, 100, Color.Transparent);
+            Image = new Image<Rgba32>(Configuration.Default, 1000, 1000, Color.White);
+            OverlayImage = new Image<Rgba32>(Configuration.Default, Image.Height, Image.Width, Color.Transparent);
 
             Height = Image.Height;
             Width = Image.Width;

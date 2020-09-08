@@ -35,7 +35,7 @@ namespace Painter
                 }
             };
 
-            Canvas.Scale = new osuTK.Vector2(10, 10);
+            Canvas.Scale = new osuTK.Vector2(1, 1);
 
             ToolPanel.OnChoose += t => Canvas.CurrentTool = t;
         }

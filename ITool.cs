@@ -1,7 +1,7 @@
+using System;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Advanced;
 using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
-using SixLabors.Primitives;
 
 namespace Painter
 {
@@ -18,7 +18,7 @@ namespace Painter
     {
         public static readonly GraphicsOptions OptionsWithoutAA = new GraphicsOptions(false);
 
-        protected GraphicsOptions Options = GraphicsOptions.Default;
+        protected GraphicsOptions Options = OptionsWithoutAA;
         public float Thickness { get; set; } = 1f;
 
         public void OnStart(int x, int y, Canvas canvas) => DrawLine(x, y, x, y, canvas);
@@ -27,78 +27,142 @@ namespace Painter
 
         protected void DrawLine(int sx, int sy, int ex, int ey, Canvas canvas)
         {
-            var points = new[] { new PointF(sx, sy), new PointF(ex, ey) };
-            canvas.Image.Mutate(ctx => ctx.DrawLines(Options, canvas.CurrentColor, Thickness, points));
+            ShapeTool.DrawLine(sx, sy, ex, ey, canvas.Image, canvas.CurrentColor, Thickness);
             canvas.UpdateImage();
         }
     }
-    public class PencilTool : DrawTool
-    {
-        public PencilTool() => Options = OptionsWithoutAA;
-    }
-    public class BrushTool : DrawTool { }
+    public class PencilTool : DrawTool { }
 
     public abstract class ShapeTool : ITool
     {
+        protected GraphicsOptions Options = DrawTool.OptionsWithoutAA;
         public float Thickness { get; set; } = 1f;
         int StartX, StartY;
+        int OldEndX, OldEndY;
 
         public void OnStart(int x, int y, Canvas canvas) => (StartX, StartY) = (x, y);
         public void OnEnd(int sx, int sy, int ex, int ey, Canvas canvas)
         {
-            ClearOverlayImage(canvas);
-
-            canvas.Image.Mutate(ctx => ctx.DrawPolygon(DrawTool.OptionsWithoutAA, canvas.CurrentColor, Thickness, GetPath(StartX, StartY, ex, ey)));
+            Draw(StartX, StartY, OldEndX, OldEndY, canvas.OverlayImage, Color.Transparent);
+            Draw(StartX, StartY, ex, ey, canvas.Image, canvas.CurrentColor);
             canvas.UpdateOverlay();
             canvas.UpdateImage();
         }
 
         public void OnMove(int sx, int sy, int ex, int ey, Canvas canvas)
         {
-            ClearOverlayImage(canvas);
+            Draw(StartX, StartY, OldEndX, OldEndY, canvas.OverlayImage, Color.Transparent);
+            Draw(StartX, StartY, ex, ey, canvas.OverlayImage, canvas.CurrentColor);
 
-            canvas.OverlayImage.Mutate(ctx => ctx.DrawPolygon(DrawTool.OptionsWithoutAA, canvas.CurrentColor, Thickness, GetPath(StartX, StartY, ex, ey)));
+            (OldEndX, OldEndY) = (ex, ey);
             canvas.UpdateOverlay();
         }
 
-        void ClearOverlayImage(Canvas canvas)
-        {
-            var transparent = (Rgba32) Color.Transparent;
-            for (int y = 0; y < canvas.OverlayImage.Height; y++)
-                for (int x = 0; x < canvas.OverlayImage.Width; x++)
-                    canvas.OverlayImage[x, y] = transparent;
-        }
+        protected virtual void Draw(int startX, int startY, int endX, int endY, Image<Rgba32> image, Rgba32 color) =>
+            DrawOverride(startX, startY, endX, endY, image, color);
+        protected abstract void DrawOverride(int startX, int startY, int endX, int endY, Image<Rgba32> image, Rgba32 color);
 
-        protected abstract PointF[] GetPath(int startX, int startY, int endX, int endY);
-    }
-    public class RectangeTool : ShapeTool
-    {
-        protected override PointF[] GetPath(int startX, int startY, int endX, int endY) =>
-            new[]
+
+        public static void DrawLine(int startX, int startY, int endX, int endY, Image<Rgba32> image, Rgba32 color, float thickness)
+        {
+            if (startY == endY) DrawStraightHorizontalLine(startX, endX, startY, image, color, thickness);
+            else if (startX == endX) DrawStraightVerticalLine(startX, startY, endY, image, color, thickness);
+            else DrawAngledLine(startX, startY, endX, endY, image, color, thickness);
+        }
+        static void DrawStraightVerticalLine(int x, int startY, int endY, Image<Rgba32> image, Rgba32 color, float thickness)
+        {
+            (startY, endY) = (Math.Min(startY, endY), Math.Max(startY, endY));
+            var ct = new Constrained(image);
+
+            for (int y = startY - (int) thickness / 2; y <= endY + (int) thickness / 2; y++)
+                for (int i = 0; i < thickness; i++)
+                    ct[x + i - (int) thickness / 2, y] = color;
+        }
+        static void DrawStraightHorizontalLine(int startX, int endX, int y, Image<Rgba32> image, Rgba32 color, float thickness)
+        {
+            (startX, endX) = (Math.Min(startX, endX), Math.Max(startX, endX));
+            for (int i = 0; i < thickness; i++)
             {
-                new PointF(startX, startY),
-                new PointF(endX, startY),
-                new PointF(endX, endY),
-                new PointF(startX, endY)
-            };
-    }
-    public class TriangleTool : ShapeTool
-    {
-        protected override PointF[] GetPath(int startX, int startY, int endX, int endY) =>
-            new[]
+                var pos = y + i - (int) thickness / 2;
+                if (pos >= 0 && pos < image.Height)
+                    image.GetPixelRowSpan(pos).Slice(startX, endX - startX).Fill(color);
+            }
+        }
+        static void DrawAngledLine(int startX, int startY, int endX, int endY, Image<Rgba32> image, Rgba32 color, float thickness)
+        {
+            var ctr = new Constrained(image);
+
+            int x1 = endX, x0 = startX;
+            int y1 = endY, y0 = startY;
+
+            var dx = Math.Abs(x1 - x0);
+            var sx = x0 < x1 ? 1 : -1;
+            var dy = -Math.Abs(y1 - y0);
+            var sy = y0 < y1 ? 1 : -1;
+            var err = dx + dy;
+
+            while (true)
             {
-                new PointF(startX, endY),
-                new PointF(startX + (endX - startX) / 2, startY),
-                new PointF(endX, endY)
-            };
+                if (thickness == 1) ctr[x0, y0] = color;
+                else
+                    for (int x = -(int) (thickness / 2); x < thickness / 2; x++)
+                        for (int y = -(int) (thickness / 2); y < thickness / 2; y++)
+                            ctr[x0 + x, y0 + y] = color;
+
+
+                if (x0 == x1 && y0 == y1) break;
+
+                var e2 = 2 * err;
+
+                if (e2 >= dy)
+                {
+                    err += dy;
+                    x0 += sx;
+                }
+                if (e2 <= dx)
+                {
+                    err += dx;
+                    y0 += sy;
+                }
+            }
+        }
+    }
+
+    public abstract class PolygonShapeTool : ShapeTool
+    {
+        protected override void Draw(int startX, int startY, int endX, int endY, Image<Rgba32> image, Rgba32 color)
+        {
+            (startX, endX) = (Math.Max(Math.Min(startX, endX), 0), Math.Min(Math.Max(startX, endX), image.Width));
+            (startY, endY) = (Math.Max(Math.Min(startY, endY), 0), Math.Min(Math.Max(startY, endY), image.Height));
+
+            DrawOverride(startX, startY, endX, endY, image, color);
+        }
+    }
+    public class RectangeTool : PolygonShapeTool
+    {
+        protected override void DrawOverride(int startX, int startY, int endX, int endY, Image<Rgba32> image, Rgba32 color)
+        {
+            var ct = new Constrained(image);
+
+            DrawLine(startX, startY, endX, startY, image, color, Thickness);
+            DrawLine(startX, endY, endX, endY, image, color, Thickness);
+
+            DrawLine(startX, startY, startX, endY, image, color, Thickness);
+            DrawLine(endX, startY, endX, endY, image, color, Thickness);
+        }
+    }
+    public class TriangleTool : PolygonShapeTool
+    {
+        protected override void DrawOverride(int startX, int startY, int endX, int endY, Image<Rgba32> image, Rgba32 color)
+        {
+            DrawLine(startX, endY, (endX - startX) / 2 + startX, startY, image, color, Thickness);
+            DrawLine((endX - startX) / 2 + startX, startY, endX, endY, image, color, Thickness);
+            DrawLine(startX, endY, endX, endY, image, color, Thickness);
+        }
     }
     public class LineTool : ShapeTool
     {
-        protected override PointF[] GetPath(int startX, int startY, int endX, int endY) =>
-            new[]
-            {
-                new PointF(startX, startY),
-                new PointF(endX, endY)
-            };
+        protected override void DrawOverride(int startX, int startY, int endX, int endY, Image<Rgba32> image, Rgba32 color) =>
+            DrawLine(startX, startY, endX, endY, image, color, Thickness);
     }
 }
