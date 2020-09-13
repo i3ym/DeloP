@@ -11,9 +11,6 @@ namespace Painter
 
         public MainScreen()
         {
-            System.Console.WriteLine(string.Join(',', typeof(MainScreen).Assembly.GetManifestResourceNames()));
-
-
             Canvas = new Canvas();
             Canvas.Scale = new osuTK.Vector2(1000 / Canvas.Image.Width, 1000 / Canvas.Image.Height);
 
@@ -29,7 +26,7 @@ namespace Painter
                 new Box() { Colour = Colour4.DarkGray, RelativeSizeAxes = Axes.Both },
                 new GridContainer()
                 {
-                    ColumnDimensions = new [] { new Dimension(GridSizeMode.Absolute, 100), new Dimension(GridSizeMode.AutoSize) },
+                    ColumnDimensions = new [] { new Dimension(GridSizeMode.Relative, .1f), new Dimension(GridSizeMode.AutoSize) },
                     Content = new Drawable[][] { new Drawable[] { ToolPanel, Canvas }, },
                     RelativeSizeAxes = Axes.Both
                 }
