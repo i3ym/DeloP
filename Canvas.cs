@@ -5,7 +5,6 @@ using osu.Framework.Graphics.Textures;
 using osu.Framework.Input.Events;
 using osu.Framework.Platform;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Advanced;
 using SixLabors.ImageSharp.PixelFormats;
 
 namespace Painter
@@ -18,7 +17,8 @@ namespace Painter
         public Image<Rgba32> OverlayImage { get; private set; }
         bool IsDrawing = false;
 
-        public Rgba32 CurrentColor;
+        public Rgba32 MainColor = Color.Black;
+        public Rgba32 SecondaryColor = Color.White;
         public ITool CurrentTool = new PencilTool();
 
         public Canvas(IWindow window)
@@ -37,8 +37,6 @@ namespace Painter
             OverlaySprite = new Sprite();
             OverlaySprite.RelativeSizeAxes = Axes.Both;
             OverlaySprite.Texture = new Texture(OverlayImage.Width, OverlayImage.Height, true, osuTK.Graphics.ES30.All.Nearest);
-
-            CurrentColor = Color.Black;
         }
         protected override void LoadComplete()
         {
@@ -100,9 +98,9 @@ namespace Painter
         public bool DrawPixelWithoutUpdate(int x, int y)
         {
             if (x < 0 || y < 0 || x >= Image.Width || y >= Image.Height) return false;
-            if (Image[x, y] == CurrentColor) return false;
+            if (Image[x, y] == MainColor) return false;
 
-            Image[x, y] = CurrentColor;
+            Image[x, y] = MainColor;
             return true;
         }
         public void DrawPixel(int x, int y)

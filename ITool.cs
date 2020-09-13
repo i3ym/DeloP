@@ -29,7 +29,7 @@ namespace Painter
 
         protected void DrawLine(int sx, int sy, int ex, int ey, Canvas canvas)
         {
-            ShapeTool.DrawLine(sx, sy, ex, ey, canvas.Image, canvas.CurrentColor, Thickness);
+            ShapeTool.DrawLine(sx, sy, ex, ey, canvas.Image, canvas.MainColor, Thickness);
             canvas.UpdateImage();
         }
     }
@@ -46,7 +46,7 @@ namespace Painter
         public void OnEnd(int sx, int sy, int ex, int ey, Canvas canvas)
         {
             Draw(StartX, StartY, OldEndX, OldEndY, canvas.OverlayImage, Color.Transparent);
-            Draw(StartX, StartY, ex, ey, canvas.Image, canvas.CurrentColor);
+            Draw(StartX, StartY, ex, ey, canvas.Image, canvas.MainColor);
             canvas.UpdateOverlay();
             canvas.UpdateImage();
         }
@@ -54,7 +54,7 @@ namespace Painter
         public void OnMove(int sx, int sy, int ex, int ey, Canvas canvas)
         {
             Draw(StartX, StartY, OldEndX, OldEndY, canvas.OverlayImage, Color.Transparent);
-            Draw(StartX, StartY, ex, ey, canvas.OverlayImage, canvas.CurrentColor);
+            Draw(StartX, StartY, ex, ey, canvas.OverlayImage, canvas.MainColor);
 
             (OldEndX, OldEndY) = (ex, ey);
             canvas.UpdateOverlay();
@@ -173,13 +173,13 @@ namespace Painter
 
         public void OnStart(int x, int y, Canvas canvas)
         {
-            Fill(x, y, canvas.Image, canvas.CurrentColor);
+            Fill(x, y, canvas.Image, canvas.MainColor);
             canvas.UpdateImage();
         }
         public void OnEnd(int sx, int sy, int ex, int ey, Canvas canvas) { }
         public void OnMove(int sx, int sy, int ex, int ey, Canvas canvas)
         {
-            Fill(ex, ey, canvas.Image, canvas.CurrentColor);
+            Fill(ex, ey, canvas.Image, canvas.MainColor);
             canvas.UpdateImage();
         }
 
