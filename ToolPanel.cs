@@ -53,6 +53,7 @@ namespace Painter
 
                 var tools = Enumerable.Empty<ITool>()
                     .Append(new PencilTool())
+                    .Append(new EraserTool())
                     .Append(new PipetteTool())
                     .Append(new LineTool())
                     .Append(new RectangleTool())
