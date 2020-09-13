@@ -14,6 +14,10 @@ namespace Painter
         void OnStart(int x, int y, Canvas canvas);
         void OnEnd(int sx, int sy, int ex, int ey, Canvas canvas);
         void OnMove(int sx, int sy, int ex, int ey, Canvas canvas);
+
+        void OnStartRight(int x, int y, Canvas canvas) { }
+        void OnEndRight(int sx, int sy, int ex, int ey, Canvas canvas) { }
+        void OnMoveRight(int sx, int sy, int ex, int ey, Canvas canvas) { }
     }
 
     public abstract class DrawTool : ITool
@@ -23,13 +27,17 @@ namespace Painter
         protected GraphicsOptions Options = OptionsWithoutAA;
         public float Thickness { get; set; } = 1f;
 
-        public void OnStart(int x, int y, Canvas canvas) => DrawLine(x, y, x, y, canvas);
+        public void OnStart(int x, int y, Canvas canvas) => DrawLine(x, y, x, y, canvas, canvas.MainColor);
         public void OnEnd(int sx, int sy, int ex, int ey, Canvas canvas) { }
-        public void OnMove(int sx, int sy, int ex, int ey, Canvas canvas) => DrawLine(sx, sy, ex, ey, canvas);
+        public void OnMove(int sx, int sy, int ex, int ey, Canvas canvas) => DrawLine(sx, sy, ex, ey, canvas, canvas.MainColor);
 
-        protected void DrawLine(int sx, int sy, int ex, int ey, Canvas canvas)
+        public void OnStartRight(int x, int y, Canvas canvas) => DrawLine(x, y, x, y, canvas, canvas.SecondaryColor);
+        public void OnEndRight(int sx, int sy, int ex, int ey, Canvas canvas) { }
+        public void OnMoveRight(int sx, int sy, int ex, int ey, Canvas canvas) => DrawLine(sx, sy, ex, ey, canvas, canvas.SecondaryColor);
+
+        void DrawLine(int sx, int sy, int ex, int ey, Canvas canvas, Rgba32 color)
         {
-            ShapeTool.DrawLine(sx, sy, ex, ey, canvas.Image, canvas.MainColor, Thickness);
+            ShapeTool.DrawLine(sx, sy, ex, ey, canvas.Image, color, Thickness);
             canvas.UpdateImage();
         }
     }
@@ -230,5 +238,18 @@ namespace Painter
                 if (FromY != -1) points.Enqueue(new FromPoint(X, Y - 1, -FromX, FromY));
             }
         }
+    }
+
+    public class PipetteTool : ITool
+    {
+        public float Thickness { get; set; }
+
+        public void OnStart(int x, int y, Canvas canvas) => canvas.MainColor = canvas.Image[x, y];
+        public void OnEnd(int sx, int sy, int ex, int ey, Canvas canvas) { }
+        public void OnMove(int sx, int sy, int ex, int ey, Canvas canvas) { }
+
+        public void OnStartRight(int x, int y, Canvas canvas) => canvas.SecondaryColor = canvas.Image[x, y];
+        public void OnEndRight(int sx, int sy, int ex, int ey, Canvas canvas) { }
+        public void OnMoveRight(int sx, int sy, int ex, int ey, Canvas canvas) { }
     }
 }

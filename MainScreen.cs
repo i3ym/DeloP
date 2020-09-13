@@ -11,7 +11,7 @@ namespace Painter
 
         public MainScreen()
         {
-            Name = "Painter";
+            Window.Title = "Painter";
         }
         protected override void LoadComplete()
         {
@@ -36,8 +36,9 @@ namespace Painter
             };
 
             Canvas.Scale = new osuTK.Vector2(1000 / Canvas.Image.Width, 1000 / Canvas.Image.Height);
-            ToolPanel.OnChoose += t => Canvas.CurrentTool = t;
-            ToolPanel.OnChangeColor += c => Canvas.MainColor = c;
+            ToolPanel.OnChooseTool += t => Canvas.CurrentTool = t;
+            ToolPanel.OnChangeMainColor += c => Canvas.MainColor = c;
+            ToolPanel.OnChangeSecondaryColor += c => Canvas.SecondaryColor = c;
         }
     }
 }

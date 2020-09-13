@@ -7,13 +7,15 @@ using osu.Framework.Graphics.UserInterface;
 using osu.Framework.Input.Events;
 using osu.Framework.Layout;
 using SixLabors.ImageSharp.PixelFormats;
+using osuTK.Input;
 
 namespace Painter
 {
     public class ToolPanel : CompositeDrawable
     {
-        public event Action<ITool> OnChoose = delegate { };
-        public event Action<Rgba32> OnChangeColor = delegate { };
+        public event Action<ITool> OnChooseTool = delegate { };
+        public event Action<Rgba32> OnChangeMainColor = delegate { };
+        public event Action<Rgba32> OnChangeSecondaryColor = delegate { };
 
         protected override void LoadComplete()
         {
@@ -21,6 +23,7 @@ namespace Painter
 
             var tools = Enumerable.Empty<ITool>()
                 .Append(new PencilTool())
+                .Append(new PipetteTool())
                 .Append(new LineTool())
                 .Append(new RectangeTool())
                 .Append(new TriangleTool())
@@ -28,7 +31,7 @@ namespace Painter
                 .Select(x => { x.Thickness = 5f; return x; })
 
                 .Select(x => new ToolDrawable(x) { RelativeSizeAxes = Axes.Both })
-                .Select(x => { x.OnChoose += t => OnChoose(t); return x; })
+                .Select(x => { x.OnChoose += t => OnChooseTool(t); return x; })
 
                 .Select((x, i) => (x, i))
                 .GroupBy(x => x.i / 2)
@@ -37,7 +40,8 @@ namespace Painter
 
 
             var colorsc = new ColorsContainer() { RelativeSizeAxes = Axes.X };
-            colorsc.OnChangeColor += clr => OnChangeColor(clr);
+            colorsc.OnChangeMainColor += clr => OnChangeMainColor(clr);
+            colorsc.OnChangeSecondaryColor += clr => OnChangeSecondaryColor(clr);
 
             var grid = new GridContainer();
             grid.RelativeSizeAxes = Axes.Both;
@@ -54,7 +58,7 @@ namespace Painter
                 grid
             };
 
-            OnChoose(tools.First().First().Tool);
+            OnChooseTool(tools.First().First().Tool);
         }
 
 
@@ -93,7 +97,8 @@ namespace Painter
 
         class ColorsContainer : CompositeDrawable
         {
-            public event Action<Rgba32> OnChangeColor = delegate { };
+            public event Action<Rgba32> OnChangeMainColor = delegate { };
+            public event Action<Rgba32> OnChangeSecondaryColor = delegate { };
 
             readonly ColorBox Color1, Color2;
             readonly GridContainer Grid;
@@ -101,16 +106,16 @@ namespace Painter
             public ColorsContainer()
             {
                 Color1 = new ColorBox(Colour4.Black);
-                Color1.ClickEvent += _ =>
-                {
-                    // TODO:
-                };
+                /* Color1.ClickEvent += _ =>
+                 {
+                     // TODO:
+                 };*/
 
                 Color2 = new ColorBox(Colour4.Black);
-                Color2.ClickEvent += _ =>
-                {
-                    // TODO:
-                };
+                /* Color2.ClickEvent += _ =>
+                 {
+                     // TODO:
+                 };*/
 
 
                 var colors = new[]
@@ -129,7 +134,8 @@ namespace Painter
                     .Select(x => new ColorBox(x) { RelativeSizeAxes = Axes.Both })
                     .Select(x =>
                     {
-                        x.ClickEvent += clr => OnChangeColor(clr);
+                        x.LeftClickEvent += clr => OnChangeMainColor(clr);
+                        x.RightClickEvent += clr => OnChangeSecondaryColor(clr);
                         return x;
                     })
                     .Select((x, i) => (x, i))
@@ -154,7 +160,8 @@ namespace Painter
 
             class ColorBox : CompositeDrawable
             {
-                public event Action<Rgba32> ClickEvent = delegate { };
+                public event Action<Rgba32> LeftClickEvent = delegate { };
+                public event Action<Rgba32> RightClickEvent = delegate { };
                 readonly Colour4 Color;
 
                 public ColorBox(Colour4 color)
@@ -173,7 +180,9 @@ namespace Painter
                 {
                     if (base.OnClick(e)) return true;
 
-                    ClickEvent(new Rgba32(Color.R, Color.G, Color.B));
+                    if (e.Button == MouseButton.Left) LeftClickEvent(new Rgba32(Color.R, Color.G, Color.B));
+                    else if (e.Button == MouseButton.Right) RightClickEvent(new Rgba32(Color.R, Color.G, Color.B));
+
                     return false;
                 }
             }

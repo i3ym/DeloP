@@ -4,6 +4,7 @@ using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
 using osu.Framework.Input.Events;
 using osu.Framework.Platform;
+using osuTK.Input;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
@@ -15,7 +16,6 @@ namespace Painter
         readonly Sprite Sprite, OverlaySprite;
         public Image<Rgba32> Image { get; private set; }
         public Image<Rgba32> OverlayImage { get; private set; }
-        bool IsDrawing = false;
 
         public Rgba32 MainColor = Color.Black;
         public Rgba32 SecondaryColor = Color.White;
@@ -53,38 +53,50 @@ namespace Painter
 
         #region move listener
 
+        enum DrawingType : byte { None, Left, Right }
+        DrawingType DrawType = DrawingType.None;
         int LastMouseX, LastMouseY;
         protected override bool OnMouseDown(MouseDownEvent e)
         {
             if (base.OnMouseDown(e)) return true;
 
-            IsDrawing = true;
+            if (e.Button == MouseButton.Left) DrawType = DrawingType.Left;
+            else if (e.Button == MouseButton.Right) DrawType = DrawingType.Right;
+            else return false;
+
+
             (LastMouseX, LastMouseY) = ((int) e.MouseDownPosition.X, (int) e.MouseDownPosition.Y);
 
             var (x, y) = ToImagePosition((int) e.MouseDownPosition.X, (int) e.MouseDownPosition.Y);
-            CurrentTool.OnStart(x, y, this);
+            if (e.Button == MouseButton.Left) CurrentTool.OnStart(x, y, this);
+            else if (e.Button == MouseButton.Right) CurrentTool.OnStartRight(x, y, this);
 
             return false;
         }
         protected override void OnMouseUp(MouseUpEvent e)
         {
             base.OnMouseUp(e);
-            IsDrawing = false;
+            DrawType = DrawingType.None;
 
             var (sx, sy) = ToImagePosition((int) e.MouseDownPosition.X, (int) e.MouseDownPosition.Y);
             var (ex, ey) = ToImagePosition((int) e.MousePosition.X, (int) e.MousePosition.Y);
-            CurrentTool.OnEnd(sx, sy, ex, ey, this);
+
+            if (e.Button == MouseButton.Left) CurrentTool.OnEnd(sx, sy, ex, ey, this);
+            else if (e.Button == MouseButton.Right) CurrentTool.OnEndRight(sx, sy, ex, ey, this);
         }
         protected override bool OnMouseMove(MouseMoveEvent e)
         {
             if (base.OnMouseMove(e)) return true;
-            if (!IsDrawing) return false;
+            if (DrawType == DrawingType.None) return false;
 
             var (x, y) = ToImagePosition((int) LastMouseX, (int) LastMouseY);
             var (tx, ty) = ToImagePosition((int) e.MousePosition.X, (int) e.MousePosition.Y);
 
             (LastMouseX, LastMouseY) = ((int) e.MousePosition.X, (int) e.MousePosition.Y);
-            CurrentTool.OnMove(x, y, tx, ty, this);
+
+            if (DrawType == DrawingType.Left) CurrentTool.OnMove(x, y, tx, ty, this);
+            else if (DrawType == DrawingType.Right) CurrentTool.OnMoveRight(x, y, tx, ty, this);
+
             return false;
         }
 
