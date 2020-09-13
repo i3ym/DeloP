@@ -21,7 +21,7 @@ namespace Painter
         void OnMoveRight(int sx, int sy, int ex, int ey, Canvas canvas) { }
     }
 
-    public abstract class DrawTool : ITool
+    public class PencilTool : ITool
     {
         public float Thickness { get; set; } = 1f;
 
@@ -39,7 +39,6 @@ namespace Painter
             canvas.UpdateImage();
         }
     }
-    public class PencilTool : DrawTool { }
     public class EraserTool : ITool
     {
         public float Thickness { get; set; } = 1f;

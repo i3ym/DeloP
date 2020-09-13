@@ -84,7 +84,6 @@ namespace Painter
 
             MainColor = Color.Black;
             SecondaryColor = Color.White;
-            CurrentTool = new PencilTool();
         }
 
 

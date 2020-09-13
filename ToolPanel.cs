@@ -122,7 +122,7 @@ namespace Painter
         }
         class ColorsContainer : CompositeDrawable
         {
-            readonly ColorBox Color1, Color2;
+            readonly ChooseColorBox Color1, Color2;
             readonly SpacedGrid Grid;
             readonly Canvas Canvas;
 
@@ -130,13 +130,17 @@ namespace Painter
             {
                 Canvas = canvas;
 
-                Color1 = new ChooseColorBox(canvas, Colour4.Black);
+                Color1 = new ChooseColorBox(canvas, Colour4.White);
+                Color1.RelativeSizeAxes = Axes.Both;
+                canvas.OnSetMainColor += c => Color1.InternalColour = new Colour4(c.R, c.G, c.B, 255);
                 /* Color1.ClickEvent += _ =>
                  {
                      // TODO:
                  };*/
 
-                Color2 = new ChooseColorBox(canvas, Colour4.Black);
+                Color2 = new ChooseColorBox(canvas, Colour4.Aquamarine);
+                Color2.RelativeSizeAxes = Axes.Both;
+                 canvas.OnSetSecondaryColor += c => Color2.InternalColour = new Colour4(c.R, c.G, c.B, 255);
                 /* Color2.ClickEvent += _ =>
                  {
                      // TODO:
@@ -148,10 +152,12 @@ namespace Painter
                     .Append(Colour4.Red).Append(Colour4.Green).Append(Colour4.Blue)
 
                     .Select(x => new SetColorBox(canvas, x) { RelativeSizeAxes = Axes.Both })
+                    .Cast<ColorBox>()
+                    .Prepend(Color2)
+                    .Prepend(Color1)
                     .Select((x, i) => (x, i))
                     .GroupBy(x => x.i / 2)
                     .Select(x => x.Select(x => x.x).ToArray())
-                    .Prepend(new[] { Color1, Color2 })
                     .ToArray();
 
                 Grid = new SpacedGrid();
@@ -190,9 +196,9 @@ namespace Painter
             {
                 public SetColorBox(Canvas canvas, Colour4 color) : base(canvas, color) { }
 
-                protected override bool OnClick(ClickEvent e)
+                protected override bool OnMouseDown(MouseDownEvent e)
                 {
-                    if (base.OnClick(e)) return true;
+                    if (base.OnMouseDown(e)) return true;
 
                     if (e.Button == MouseButton.Left) Canvas.MainColor = new Rgba32(Color.R, Color.G, Color.B);
                     else if (e.Button == MouseButton.Right) Canvas.SecondaryColor = new Rgba32(Color.R, Color.G, Color.B);
@@ -202,12 +208,14 @@ namespace Painter
             }
             class ChooseColorBox : ColorBox
             {
+                public Colour4 InternalColour { get => InternalChild.Colour; set => InternalChild.Colour = value; }
+
                 public ChooseColorBox(Canvas canvas, Colour4 color) : base(canvas, color) { }
 
-                protected override bool OnClick(ClickEvent e)
+                protected override bool OnMouseDown(MouseDownEvent e)
                 {
                     // TODO color chooser
-                    return base.OnClick(e);
+                    return base.OnMouseDown(e);
                 }
             }
         }
