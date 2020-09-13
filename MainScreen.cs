@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
@@ -21,12 +22,14 @@ namespace Painter
             base.LoadComplete();
 
             Window.Title = "Painter";
+            Window.WindowStateChanged += (obj, e) => Task.Run(async () => { await Task.Delay(5); Invalidate(); });
+
             Children = new Drawable[]
             {
                 new Box() { Colour = Colour4.DarkGray, RelativeSizeAxes = Axes.Both },
                 new GridContainer()
                 {
-                    ColumnDimensions = new [] { new Dimension(GridSizeMode.Relative, .1f), new Dimension(GridSizeMode.AutoSize) },
+                    ColumnDimensions = new [] { new Dimension(GridSizeMode.Absolute, 55), new Dimension(GridSizeMode.AutoSize) },
                     Content = new Drawable[][] { new Drawable[] { ToolPanel, Canvas }, },
                     RelativeSizeAxes = Axes.Both
                 }
