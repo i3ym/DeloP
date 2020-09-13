@@ -9,6 +9,7 @@ namespace Painter
 {
     public interface ITool
     {
+        string SpriteName => GetType().Name[..^4].ToLowerInvariant();
         float Thickness { get; set; }
 
         void OnStart(int x, int y, Canvas canvas);
@@ -147,7 +148,7 @@ namespace Painter
             DrawOverride(startX, startY, endX, endY, image, color);
         }
     }
-    public class RectangeTool : PolygonShapeTool
+    public class RectangleTool : PolygonShapeTool
     {
         protected override void DrawOverride(int startX, int startY, int endX, int endY, Image<Rgba32> image, Rgba32 color)
         {

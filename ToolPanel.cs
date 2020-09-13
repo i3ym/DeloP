@@ -1,152 +1,161 @@
-using System.Linq;
 using System;
+using System.Linq;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
-using osu.Framework.Graphics.UserInterface;
 using osu.Framework.Input.Events;
 using osu.Framework.Layout;
 using SixLabors.ImageSharp.PixelFormats;
 using osuTK.Input;
+using osu.Framework.Graphics.Sprites;
+using osu.Framework.Graphics.Textures;
 
 namespace Painter
 {
     public class ToolPanel : CompositeDrawable
     {
-        public event Action<ITool> OnChooseTool = delegate { };
-        public event Action<Rgba32> OnChangeMainColor = delegate { };
-        public event Action<Rgba32> OnChangeSecondaryColor = delegate { };
+        readonly Canvas Canvas;
 
+        public ToolPanel(Canvas canvas) => Canvas = canvas;
         protected override void LoadComplete()
         {
             base.LoadComplete();
-
-            var tools = Enumerable.Empty<ITool>()
-                .Append(new PencilTool())
-                .Append(new PipetteTool())
-                .Append(new LineTool())
-                .Append(new RectangeTool())
-                .Append(new TriangleTool())
-                .Append(new FillTool())
-                .Select(x => { x.Thickness = 5f; return x; })
-
-                .Select(x => new ToolDrawable(x) { RelativeSizeAxes = Axes.Both })
-                .Select(x => { x.OnChoose += t => OnChooseTool(t); return x; })
-
-                .Select((x, i) => (x, i))
-                .GroupBy(x => x.i / 2)
-                .Select(x => x.Select(x => x.x).ToArray())
-                .ToArray();
-
-
-            var colorsc = new ColorsContainer() { RelativeSizeAxes = Axes.X };
-            colorsc.OnChangeMainColor += clr => OnChangeMainColor(clr);
-            colorsc.OnChangeSecondaryColor += clr => OnChangeSecondaryColor(clr);
 
             var grid = new GridContainer();
             grid.RelativeSizeAxes = Axes.Both;
             grid.Content = new Drawable[][]
             {
-                new Drawable[] { new GridContainer() { Content = tools, RelativeSizeAxes = Axes.Both } },
-                new Drawable[] { colorsc },
+                new Drawable[] { new ToolsContainer(Canvas) { RelativeSizeAxes = Axes.X } },
+                new Drawable[] { new ColorsContainer(Canvas) { RelativeSizeAxes = Axes.X } },
             };
-
 
             InternalChildren = new Drawable[]
             {
                 new Box() { Colour = Colour4.Black, RelativeSizeAxes = Axes.Both },
                 grid
             };
-
-            OnChooseTool(tools.First().First().Tool);
         }
 
 
-
-        class ToolDrawable : CompositeDrawable
+        class SpacedGrid : GridContainer
         {
-            public event Action<ITool> OnChoose = delegate { };
-            public readonly ITool Tool;
+            // TODO:
+        }
 
-            public ToolDrawable(ITool tool)
+        class ToolsContainer : CompositeDrawable
+        {
+            readonly SpacedGrid Grid;
+            readonly Canvas Canvas;
+
+            public ToolsContainer(Canvas canvas)
             {
-                Tool = tool;
+                Canvas = canvas;
 
-                var button = new ToolButton(e => OnChoose(Tool));
-                button.RelativeSizeAxes = Axes.Both;
+                var tools = Enumerable.Empty<ITool>()
+                    .Append(new PencilTool())
+                    .Append(new PipetteTool())
+                    .Append(new LineTool())
+                    .Append(new RectangleTool())
+                    .Append(new TriangleTool())
+                    .Append(new FillTool())
+                    .Select(x => { x.Thickness = 5f; return x; })
 
-                button.Text = tool.GetType().Name.Replace("Tool", "");
+                    .Select(x => new ToolDrawable(Canvas, x) { RelativeSizeAxes = Axes.Both })
+                    .Select((x, i) => (x, i))
+                    .GroupBy(x => x.i / 2)
+                    .Select(x => x.Select(x => x.x).ToArray())
+                    .ToArray();
 
-                InternalChild = button;
+                Grid = new SpacedGrid();
+                Grid.RelativeSizeAxes = Axes.Both;
+                Grid.Content = tools;
+
+                InternalChild = Grid;
+
+                Canvas.CurrentTool = tools.First().First().Tool;
+            }
+
+            protected override bool OnInvalidate(Invalidation invalidation, InvalidationSource source)
+            {
+                Height = Grid.Content.SelectMany(x => x).Count() * Grid.DrawWidth / 2f / 2f;
+                return base.OnInvalidate(invalidation, source);
             }
 
 
-            class ToolButton : BasicButton
+            class ToolDrawable : CompositeDrawable
             {
-                readonly Action<ClickEvent> ClickEvent;
+                readonly Canvas Canvas;
+                public readonly ITool Tool;
 
-                public ToolButton(Action<ClickEvent> onClick) => ClickEvent = onClick;
+                public ToolDrawable(Canvas canvas, ITool tool)
+                {
+                    Canvas = canvas;
+                    Tool = tool;
+
+                    var sprite = new Sprite();
+                    sprite.RelativeSizeAxes = Axes.Both;
+
+                    try
+                    {
+                        var img = SpriteStore.Load("res.sprites." + tool.SpriteName + ".png");
+                        sprite.Texture = new Texture(img.Width, img.Height, true, osuTK.Graphics.ES30.All.Nearest);
+                        sprite.Texture.SetData(new TextureUpload(img));
+                    }
+                    catch { Console.WriteLine("res.sprites." + tool.SpriteName + ".png   was not found"); }
+
+                    InternalChild = sprite;
+
+                    /* var button = new ToolButton(canvas);
+                    button.RelativeSizeAxes = Axes.Both;
+                    button.Text = tool.GetType().Name.Replace("Tool", "");
+
+                    InternalChild = button;*/
+                }
 
                 protected override bool OnClick(ClickEvent e)
                 {
-                    ClickEvent(e);
+                    Canvas.CurrentTool = Tool;
                     return base.OnClick(e);
                 }
             }
         }
-
         class ColorsContainer : CompositeDrawable
         {
-            public event Action<Rgba32> OnChangeMainColor = delegate { };
-            public event Action<Rgba32> OnChangeSecondaryColor = delegate { };
-
             readonly ColorBox Color1, Color2;
-            readonly GridContainer Grid;
+            readonly SpacedGrid Grid;
+            readonly Canvas Canvas;
 
-            public ColorsContainer()
+            public ColorsContainer(Canvas canvas)
             {
-                Color1 = new ColorBox(Colour4.Black);
+                Canvas = canvas;
+
+                Color1 = new ChooseColorBox(canvas, Colour4.Black);
                 /* Color1.ClickEvent += _ =>
                  {
                      // TODO:
                  };*/
 
-                Color2 = new ColorBox(Colour4.Black);
+                Color2 = new ChooseColorBox(canvas, Colour4.Black);
                 /* Color2.ClickEvent += _ =>
                  {
                      // TODO:
                  };*/
 
 
-                var colors = new[]
-                {
-                    Colour4.White,
-                    Colour4.Black,
-                    Colour4.DarkGray,
-                    Colour4.Gray,
+                var colors = Enumerable.Empty<Colour4>()
+                    .Append(Colour4.White).Append(Colour4.Black).Append(Colour4.DarkGray).Append(Colour4.Gray)
+                    .Append(Colour4.Red).Append(Colour4.Green).Append(Colour4.Blue)
 
-                    Colour4.Red,
-                    Colour4.Green,
-                    Colour4.Blue,
-                };
-
-                var colorsd = colors
-                    .Select(x => new ColorBox(x) { RelativeSizeAxes = Axes.Both })
-                    .Select(x =>
-                    {
-                        x.LeftClickEvent += clr => OnChangeMainColor(clr);
-                        x.RightClickEvent += clr => OnChangeSecondaryColor(clr);
-                        return x;
-                    })
+                    .Select(x => new SetColorBox(canvas, x) { RelativeSizeAxes = Axes.Both })
                     .Select((x, i) => (x, i))
                     .GroupBy(x => x.i / 2)
                     .Select(x => x.Select(x => x.x).ToArray())
                     .Prepend(new[] { Color1, Color2 })
                     .ToArray();
 
-                Grid = new GridContainer();
+                Grid = new SpacedGrid();
                 Grid.RelativeSizeAxes = Axes.Both;
-                Grid.Content = colorsd;
+                Grid.Content = colors;
 
                 InternalChild = Grid;
             }
@@ -158,14 +167,14 @@ namespace Painter
             }
 
 
-            class ColorBox : CompositeDrawable
+            abstract class ColorBox : CompositeDrawable
             {
-                public event Action<Rgba32> LeftClickEvent = delegate { };
-                public event Action<Rgba32> RightClickEvent = delegate { };
-                readonly Colour4 Color;
+                protected readonly Canvas Canvas;
+                protected readonly Colour4 Color;
 
-                public ColorBox(Colour4 color)
+                public ColorBox(Canvas canvas, Colour4 color)
                 {
+                    Canvas = canvas;
                     Color = color;
 
                     Masking = true;
@@ -175,15 +184,29 @@ namespace Painter
 
                     InternalChild = new Box() { Colour = color, RelativeSizeAxes = Axes.Both };
                 }
+            }
+            class SetColorBox : ColorBox
+            {
+                public SetColorBox(Canvas canvas, Colour4 color) : base(canvas, color) { }
 
                 protected override bool OnClick(ClickEvent e)
                 {
                     if (base.OnClick(e)) return true;
 
-                    if (e.Button == MouseButton.Left) LeftClickEvent(new Rgba32(Color.R, Color.G, Color.B));
-                    else if (e.Button == MouseButton.Right) RightClickEvent(new Rgba32(Color.R, Color.G, Color.B));
+                    if (e.Button == MouseButton.Left) Canvas.MainColor = new Rgba32(Color.R, Color.G, Color.B);
+                    else if (e.Button == MouseButton.Right) Canvas.SecondaryColor = new Rgba32(Color.R, Color.G, Color.B);
 
                     return false;
+                }
+            }
+            class ChooseColorBox : ColorBox
+            {
+                public ChooseColorBox(Canvas canvas, Colour4 color) : base(canvas, color) { }
+
+                protected override bool OnClick(ClickEvent e)
+                {
+                    // TODO color chooser
+                    return base.OnClick(e);
                 }
             }
         }

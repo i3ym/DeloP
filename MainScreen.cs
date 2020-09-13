@@ -6,39 +6,34 @@ namespace Painter
 {
     public class MainScreen : osu.Framework.Game
     {
-        ToolPanel ToolPanel = null!;
-        Canvas Canvas = null!;
+        readonly ToolPanel ToolPanel;
+        readonly Canvas Canvas;
 
         public MainScreen()
         {
-            Window.Title = "Painter";
+            System.Console.WriteLine(string.Join(',', typeof(MainScreen).Assembly.GetManifestResourceNames()));
+
+
+            Canvas = new Canvas();
+            Canvas.Scale = new osuTK.Vector2(1000 / Canvas.Image.Width, 1000 / Canvas.Image.Height);
+
+            ToolPanel = new ToolPanel(Canvas) { RelativeSizeAxes = Axes.Both };
         }
         protected override void LoadComplete()
         {
             base.LoadComplete();
 
+            Window.Title = "Painter";
             Children = new Drawable[]
             {
                 new Box() { Colour = Colour4.DarkGray, RelativeSizeAxes = Axes.Both },
                 new GridContainer()
                 {
                     ColumnDimensions = new [] { new Dimension(GridSizeMode.Absolute, 100), new Dimension(GridSizeMode.AutoSize) },
-                    Content = new Drawable[][]
-                    {
-                        new Drawable[]
-                        {
-                            ToolPanel = new ToolPanel() { RelativeSizeAxes = Axes.Both },
-                            Canvas = new Canvas(Window)
-                        },
-                    },
+                    Content = new Drawable[][] { new Drawable[] { ToolPanel, Canvas }, },
                     RelativeSizeAxes = Axes.Both
                 }
             };
-
-            Canvas.Scale = new osuTK.Vector2(1000 / Canvas.Image.Width, 1000 / Canvas.Image.Height);
-            ToolPanel.OnChooseTool += t => Canvas.CurrentTool = t;
-            ToolPanel.OnChangeMainColor += c => Canvas.MainColor = c;
-            ToolPanel.OnChangeSecondaryColor += c => Canvas.SecondaryColor = c;
         }
     }
 }

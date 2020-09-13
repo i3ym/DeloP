@@ -1,3 +1,4 @@
+using System;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Sprites;
@@ -12,18 +13,49 @@ namespace Painter
 {
     public class Canvas : CompositeDrawable
     {
-        readonly IWindow Window;
+        public event Action<ITool> OnSetTool = delegate { };
+        public event Action<Rgba32> OnSetMainColor = delegate { };
+        public event Action<Rgba32> OnSetSecondaryColor = delegate { };
+
         readonly Sprite Sprite, OverlaySprite;
         public Image<Rgba32> Image { get; private set; }
         public Image<Rgba32> OverlayImage { get; private set; }
 
-        public Rgba32 MainColor = Color.Black;
-        public Rgba32 SecondaryColor = Color.White;
-        public ITool CurrentTool = new PencilTool();
+        Rgba32 _MainColor = Color.Black;
+        Rgba32 _SecondaryColor = Color.White;
+        ITool _CurrentTool = new PencilTool();
 
-        public Canvas(IWindow window)
+        public Rgba32 MainColor
         {
-            Window = window;
+            get => _MainColor;
+            set
+            {
+                _MainColor = value;
+                OnSetMainColor(value);
+            }
+        }
+        public Rgba32 SecondaryColor
+        {
+            get => _SecondaryColor;
+            set
+            {
+                _SecondaryColor = value;
+                OnSetSecondaryColor(value);
+            }
+        }
+        public ITool CurrentTool
+        {
+            get => _CurrentTool;
+            set
+            {
+                _CurrentTool = value;
+                OnSetTool(value);
+            }
+        }
+
+
+        public Canvas()
+        {
             Image = new Image<Rgba32>(Configuration.Default, 1000, 1000, Color.White);
             OverlayImage = new Image<Rgba32>(Configuration.Default, Image.Height, Image.Width, Color.Transparent);
 
@@ -49,13 +81,19 @@ namespace Painter
             };
 
             UpdateImage();
+
+            MainColor = Color.Black;
+            SecondaryColor = Color.White;
+            CurrentTool = new PencilTool();
         }
+
 
         #region move listener
 
         enum DrawingType : byte { None, Left, Right }
         DrawingType DrawType = DrawingType.None;
         int LastMouseX, LastMouseY;
+
         protected override bool OnMouseDown(MouseDownEvent e)
         {
             if (base.OnMouseDown(e)) return true;
@@ -101,6 +139,7 @@ namespace Painter
         }
 
         #endregion
+
 
         (int x, int y) ToImagePosition(int mousex, int mousey) =>
             (
