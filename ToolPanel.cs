@@ -23,6 +23,7 @@ namespace Painter
         public ToolPanel(Canvas canvas)
         {
             Canvas = canvas;
+
             Container = new Container();
             CTools = new ToolsContainer(Canvas) { RelativeSizeAxes = Axes.X };
             CColors = new ColorsContainer(Canvas) { RelativeSizeAxes = Axes.X };
@@ -31,6 +32,7 @@ namespace Painter
         {
             base.LoadComplete();
 
+            Container.Padding = new MarginPadding(2);
             Container.RelativeSizeAxes = Axes.Both;
             Container.Add(CTools);
             Container.Add(CColors);
@@ -83,13 +85,23 @@ namespace Painter
             {
                 readonly Canvas Canvas;
                 public readonly ITool Tool;
+                bool IsSelected = false;
 
                 public ToolDrawable(Canvas canvas, ITool tool) : base(LoadTexture(tool))
                 {
                     Canvas = canvas;
                     Tool = tool;
 
+                    OutBorderMultiplier = 2f;
+                    BackgroundBox.Texture = Textures.SelectedTool.Value;
+                    BackgroundBox.Colour = Colors.ToolSelection;
                     DarkBorderBox.Alpha = BackgroundBox.Alpha = 0;
+
+                    canvas.OnSetTool += t =>
+                    {
+                        IsSelected = t == Tool;
+                        DarkBorderBox.Alpha = BackgroundBox.Alpha = IsSelected ? 1 : 0;
+                    };
                 }
 
                 static Texture LoadTexture(ITool tool)
@@ -107,6 +119,16 @@ namespace Painter
                     return Texture.WhitePixel;
                 }
 
+                protected override bool OnHover(HoverEvent e)
+                {
+                    BackgroundBox.Alpha = 1;
+                    return base.OnHover(e);
+                }
+                protected override void OnHoverLost(HoverLostEvent e)
+                {
+                    if (!IsSelected) BackgroundBox.Alpha = 0;
+                    base.OnHoverLost(e);
+                }
                 protected override bool OnClick(ClickEvent e)
                 {
                     Canvas.CurrentTool = Tool;
@@ -232,13 +254,14 @@ namespace Painter
 
         abstract class SpriteBox : CompositeDrawable
         {
-            protected readonly Sprite Sprite;
-            protected readonly Box DarkBorderBox, BackgroundBox;
+            protected readonly Sprite Sprite, DarkBorderBox, BackgroundBox;
+            protected float OutBorderMultiplier = 1f;
+            protected float InBorderMultiplier = 2f;
 
             public SpriteBox(Texture texture)
             {
-                AddInternal(BackgroundBox = new Box() { Colour = Colors.Background, RelativeSizeAxes = Axes.Both });
-                AddInternal(DarkBorderBox = new Box() { Colour = Colors.DarkBackground });
+                AddInternal(BackgroundBox = new Sprite() { Texture = Texture.WhitePixel, Colour = Colors.Background, RelativeSizeAxes = Axes.Both });
+                AddInternal(DarkBorderBox = new Sprite() { Texture = Texture.WhitePixel, Colour = Colors.DarkBackground });
                 AddInternal(Sprite = new Sprite() { Texture = texture });
 
                 BackgroundBox.X = BackgroundBox.Y = 0;
@@ -246,8 +269,8 @@ namespace Painter
 
             protected override bool OnInvalidate(Invalidation invalidation, InvalidationSource source)
             {
-                var outb = (int) DrawWidth / 11;
-                var inb = (int) DrawWidth / 22;
+                var outb = (int) DrawWidth / (11 * OutBorderMultiplier);
+                var inb = (int) DrawWidth / (11 * InBorderMultiplier);
 
                 Sprite.X = Sprite.Y = outb + inb;
                 DarkBorderBox.X = DarkBorderBox.Y = outb;

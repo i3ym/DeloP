@@ -29,7 +29,7 @@ namespace Painter
                 new Box() { Colour = Colour4.DarkGray, RelativeSizeAxes = Axes.Both },
                 new GridContainer()
                 {
-                    ColumnDimensions = new [] { new Dimension(GridSizeMode.Absolute, 55), new Dimension(GridSizeMode.AutoSize) },
+                    ColumnDimensions = new [] { new Dimension(GridSizeMode.Absolute, 100), new Dimension(GridSizeMode.AutoSize) },
                     Content = new Drawable[][] { new Drawable[] { ToolPanel, Canvas }, },
                     RelativeSizeAxes = Axes.Both
                 }
