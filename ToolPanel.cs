@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System;
 using System.Linq;
 using osu.Framework.Graphics;
@@ -15,37 +16,43 @@ namespace Painter
     public class ToolPanel : CompositeDrawable
     {
         readonly Canvas Canvas;
+        readonly Container Container;
+        readonly ToolsContainer CTools;
+        readonly ColorsContainer CColors;
 
-        public ToolPanel(Canvas canvas) => Canvas = canvas;
+        public ToolPanel(Canvas canvas)
+        {
+            Canvas = canvas;
+            Container = new Container();
+            CTools = new ToolsContainer(Canvas) { RelativeSizeAxes = Axes.X };
+            CColors = new ColorsContainer(Canvas) { RelativeSizeAxes = Axes.X };
+        }
         protected override void LoadComplete()
         {
             base.LoadComplete();
 
-            var grid = new GridContainer();
-            grid.RelativeSizeAxes = Axes.Both;
-            grid.Content = new Drawable[][]
-            {
-                new Drawable[] { new ToolsContainer(Canvas) { RelativeSizeAxes = Axes.X } },
-                new Drawable[] { new ColorsContainer(Canvas) { RelativeSizeAxes = Axes.X } },
-            };
+            Container.RelativeSizeAxes = Axes.Both;
+            Container.Add(CTools);
+            Container.Add(CColors);
 
             InternalChildren = new Drawable[]
             {
                 new Box() { Colour = Colors.Background, RelativeSizeAxes = Axes.Both },
-                grid
+                Container
             };
+        }
+
+        protected override bool OnInvalidate(Invalidation invalidation, InvalidationSource source)
+        {
+            CColors.Y = CTools.DrawHeight + 10;
+            return base.OnInvalidate(invalidation, source);
         }
 
 
         class ToolsContainer : CompositeDrawable
         {
-            readonly GridContainer Grid;
-            readonly Canvas Canvas;
-
             public ToolsContainer(Canvas canvas)
             {
-                Canvas = canvas;
-
                 var tools = Enumerable.Empty<ITool>()
                     .Append(new PencilTool())
                     .Append(new EraserTool())
@@ -55,51 +62,49 @@ namespace Painter
                     .Append(new TriangleTool())
                     .Append(new FillTool())
                     .Select(x => { x.Thickness = 5f; return x; })
+                    .Select(x => new ToolDrawable(canvas, x));
 
-                    .Select(x => new ToolDrawable(Canvas, x) { RelativeSizeAxes = Axes.Both })
-                    .Select((x, i) => (x, i))
-                    .GroupBy(x => x.i / 2)
-                    .Select(x => x.Select(x => x.x).ToArray())
-                    .ToArray();
 
-                Grid = new GridContainer();
-                Grid.RelativeSizeAxes = Axes.Both;
-                Grid.Content = tools;
+                var grid = new CubeGrid(canvas, tools);
+                grid.RelativeSizeAxes = Axes.X;
+                InternalChild = grid;
 
-                InternalChild = Grid;
-
-                Canvas.CurrentTool = tools.First().First().Tool;
+                canvas.CurrentTool = tools.First().Tool;
             }
 
             protected override bool OnInvalidate(Invalidation invalidation, InvalidationSource source)
             {
-                Height = Grid.Content.Length / 2 * Grid.DrawWidth;
+                Height = InternalChild.DrawHeight;
                 return base.OnInvalidate(invalidation, source);
             }
 
 
-            class ToolDrawable : CompositeDrawable
+            class ToolDrawable : SpriteBox
             {
                 readonly Canvas Canvas;
                 public readonly ITool Tool;
 
-                public ToolDrawable(Canvas canvas, ITool tool)
+                public ToolDrawable(Canvas canvas, ITool tool) : base(LoadTexture(tool))
                 {
                     Canvas = canvas;
                     Tool = tool;
 
-                    var sprite = new Sprite();
-                    sprite.RelativeSizeAxes = Axes.Both;
+                    DarkBorderBox.Alpha = BackgroundBox.Alpha = 0;
+                }
 
+                static Texture LoadTexture(ITool tool)
+                {
                     try
                     {
                         var img = SpriteStore.Load("res.sprites." + tool.SpriteName + ".png");
-                        sprite.Texture = new Texture(img.Width, img.Height, true, osuTK.Graphics.ES30.All.Nearest);
-                        sprite.Texture.SetData(new TextureUpload(img));
+                        var texture = new Texture(img.Width, img.Height, true, osuTK.Graphics.ES30.All.Nearest);
+                        texture.SetData(new TextureUpload(img));
+
+                        return texture;
                     }
                     catch { Console.WriteLine("res.sprites." + tool.SpriteName + ".png   was not found"); }
 
-                    InternalChild = sprite;
+                    return Texture.WhitePixel;
                 }
 
                 protected override bool OnClick(ClickEvent e)
@@ -112,20 +117,24 @@ namespace Painter
         class ColorsContainer : CompositeDrawable
         {
             readonly CurrentColors CColors;
-            readonly ColorsGrid GColors;
+            readonly CubeGrid GColors;
             readonly Canvas Canvas;
 
             public ColorsContainer(Canvas canvas)
             {
-                AddInternal(new Box() { Colour = Colour4.Black, RelativeSizeAxes = Axes.Both }); // TODO: remove
-
                 Canvas = canvas;
 
                 CColors = new CurrentColors(canvas);
                 CColors.RelativeSizeAxes = Axes.X;
                 AddInternal(CColors);
 
-                GColors = new ColorsGrid(canvas);
+
+                var colors = Enumerable.Empty<Colour4>()
+                     .Append(Colour4.White).Append(Colour4.Black).Append(Colour4.DarkGray).Append(Colour4.Gray)
+                     .Append(Colour4.Red).Append(Colour4.Green).Append(Colour4.Blue)
+                     .Select(x => new SetColorBox(canvas, x));
+
+                GColors = new CubeGrid(canvas, colors);
                 GColors.RelativeSizeAxes = Axes.X;
                 AddInternal(GColors);
             }
@@ -138,47 +147,6 @@ namespace Painter
             }
 
 
-            class ColorsGrid : CompositeDrawable
-            {
-                readonly GridContainer Grid;
-                readonly Canvas Canvas;
-
-                public ColorsGrid(Canvas canvas)
-                {
-                    Canvas = canvas;
-
-                    var colors = Enumerable.Empty<Colour4>()
-                        .Append(Colour4.White).Append(Colour4.Black).Append(Colour4.DarkGray).Append(Colour4.Gray)
-                        .Append(Colour4.Red).Append(Colour4.Green).Append(Colour4.Blue)
-
-                        .Select(x => new SetColorBox(canvas, x))
-                        .Select(x =>
-                        {
-                            x.Width = x.Height = 22;
-                            return x;
-                        })
-                        .Select((x, i) => (x, i))
-                        .GroupBy(x => x.i / 2)
-                        .Select(x => x.Select(x => x.x).ToArray())
-                        .ToArray();
-
-                    Grid = new GridContainer();
-                    Grid.RelativeSizeAxes = Axes.Both;
-                    Grid.Content = colors;
-
-                    AddInternal(Grid);
-                }
-
-                protected override bool OnInvalidate(Invalidation invalidation, InvalidationSource source)
-                {
-                    foreach (var content in Grid.Content)
-                        foreach (var child in content)
-                            child.Width = child.Height = DrawWidth / 2;
-
-                    Height = Grid.Content.Length * DrawWidth / 2;
-                    return base.OnInvalidate(invalidation, source);
-                }
-            }
             class CurrentColors : CompositeDrawable
             {
                 public readonly ChooseColorBox Color1, Color2;
@@ -224,9 +192,11 @@ namespace Painter
 
                 public class ChooseColorBox : ColorBox
                 {
-                    public Colour4 InternalColour { get => ColourBox.Colour; set => ColourBox.Colour = value; }
+                    public Colour4 InternalColour { get => Sprite.Colour; set => Sprite.Colour = value; }
 
-                    public ChooseColorBox(Canvas canvas, Colour4 color) : base(canvas, color) { }
+                    protected readonly Canvas Canvas;
+
+                    public ChooseColorBox(Canvas canvas, Colour4 color) : base(color) => Canvas = canvas;
 
                     protected override bool OnMouseDown(MouseDownEvent e)
                     {
@@ -236,41 +206,17 @@ namespace Painter
                 }
             }
 
-            abstract class ColorBox : CompositeDrawable
+            abstract class ColorBox : SpriteBox
             {
-                protected readonly Canvas Canvas;
                 protected readonly Colour4 Color;
-                protected readonly Box ColourBox, DarkBorderBox, BackgroundBox;
 
-                public ColorBox(Canvas canvas, Colour4 color)
-                {
-                    Canvas = canvas;
-                    Color = color;
-
-                    AddInternal(BackgroundBox = new Box() { Colour = Colors.Background, RelativeSizeAxes = Axes.Both });
-                    AddInternal(DarkBorderBox = new Box() { Colour = Colors.DarkBackground });
-                    AddInternal(ColourBox = new Box() { Colour = color });
-
-                    BackgroundBox.X = BackgroundBox.Y = 0;
-                }
-
-                protected override bool OnInvalidate(Invalidation invalidation, InvalidationSource source)
-                {
-                    var outb = (int) DrawWidth / 11;
-                    var inb = (int) DrawWidth / 22;
-
-                    ColourBox.X = ColourBox.Y = outb + inb;
-                    DarkBorderBox.X = DarkBorderBox.Y = outb;
-
-                    DarkBorderBox.Width = DarkBorderBox.Height = BackgroundBox.DrawWidth - (outb * 2);
-                    ColourBox.Width = ColourBox.Height = DarkBorderBox.DrawWidth - (inb * 2);
-
-                    return base.OnInvalidate(invalidation, source);
-                }
+                public ColorBox(Colour4 color) : base(Texture.WhitePixel) => Sprite.Colour = Color = color;
             }
             class SetColorBox : ColorBox
             {
-                public SetColorBox(Canvas canvas, Colour4 color) : base(canvas, color) { }
+                protected readonly Canvas Canvas;
+
+                public SetColorBox(Canvas canvas, Colour4 color) : base(color) => Canvas = canvas;
 
                 protected override bool OnMouseDown(MouseDownEvent e)
                 {
@@ -281,6 +227,67 @@ namespace Painter
 
                     return false;
                 }
+            }
+        }
+
+        abstract class SpriteBox : CompositeDrawable
+        {
+            protected readonly Sprite Sprite;
+            protected readonly Box DarkBorderBox, BackgroundBox;
+
+            public SpriteBox(Texture texture)
+            {
+                AddInternal(BackgroundBox = new Box() { Colour = Colors.Background, RelativeSizeAxes = Axes.Both });
+                AddInternal(DarkBorderBox = new Box() { Colour = Colors.DarkBackground });
+                AddInternal(Sprite = new Sprite() { Texture = texture });
+
+                BackgroundBox.X = BackgroundBox.Y = 0;
+            }
+
+            protected override bool OnInvalidate(Invalidation invalidation, InvalidationSource source)
+            {
+                var outb = (int) DrawWidth / 11;
+                var inb = (int) DrawWidth / 22;
+
+                Sprite.X = Sprite.Y = outb + inb;
+                DarkBorderBox.X = DarkBorderBox.Y = outb;
+
+                DarkBorderBox.Width = DarkBorderBox.Height = BackgroundBox.DrawWidth - (outb * 2);
+                Sprite.Width = Sprite.Height = DarkBorderBox.DrawWidth - (inb * 2);
+
+                return base.OnInvalidate(invalidation, source);
+            }
+        }
+        class CubeGrid : CompositeDrawable
+        {
+            readonly GridContainer Grid;
+            readonly Canvas Canvas;
+
+            public CubeGrid(Canvas canvas, IEnumerable<Drawable> children)
+            {
+                Canvas = canvas;
+
+                var content = children
+                    .Select((x, i) => (x, i))
+                    .GroupBy(x => x.i / 2)
+                    .Select(x => x.Select(x => x.x).ToArray())
+                    .ToArray();
+
+                Grid = new GridContainer();
+                Grid.RelativeSizeAxes = Axes.Both;
+                Grid.Content = content;
+
+                InternalChild = Grid;
+            }
+
+            protected override bool OnInvalidate(Invalidation invalidation, InvalidationSource source)
+            {
+                foreach (var content in Grid.Content)
+                    foreach (var child in content)
+                        child.Width = child.Height = DrawWidth / 2;
+
+                Height = Grid.Content.Length * DrawWidth / 2;
+                return base.OnInvalidate(invalidation, source);
             }
         }
     }
