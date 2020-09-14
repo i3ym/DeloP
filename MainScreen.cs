@@ -28,6 +28,7 @@ namespace DeloP
                 Canvas.ChangeSize((int) CanvasContainer.Width, (int) CanvasContainer.Height);
                 Canvas.Position = CanvasContainer.Position;
             };
+            Canvas.OnMove += () => CanvasContainer.Position = Canvas.Position;
 
             ToolPanel = new ToolPanel(Canvas) { RelativeSizeAxes = Axes.Both };
         }

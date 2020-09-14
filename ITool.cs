@@ -344,4 +344,16 @@ namespace DeloP
         public void OnEndRight(int sx, int sy, int ex, int ey, Canvas canvas) { }
         public void OnMoveRight(int sx, int sy, int ex, int ey, Canvas canvas) { }
     }
+    public class MoveTool : ITool
+    {
+        public float Thickness { get; set; }
+
+        public void OnStart(int x, int y, Canvas canvas) { }
+        public void OnEnd(int sx, int sy, int ex, int ey, Canvas canvas) { }
+        public void OnMove(int sx, int sy, int ex, int ey, Canvas canvas)
+        {
+            canvas.X += ex - sx;
+            canvas.Y += ey - sy;
+        }
+    }
 }
