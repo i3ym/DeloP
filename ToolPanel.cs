@@ -152,9 +152,26 @@ namespace DeloP
 
 
                 var colors = Enumerable.Empty<Colour4>()
-                     .Append(Colour4.White).Append(Colour4.Black).Append(Colour4.DarkGray).Append(Colour4.Gray)
-                     .Append(Colour4.Red).Append(Colour4.Green).Append(Colour4.Blue)
-                     .Select(x => new SetColorBox(canvas, x));
+                    .Append(Colour4.White).Append(Colour4.Black)
+                    .Append(new Colour4(195, 195, 195, 255))
+                    .Append(new Colour4(127, 127, 127, 255))
+                    .Append(new Colour4(185, 122, 87, 255))
+                    .Append(new Colour4(136, 0, 21, 255))
+                    .Append(new Colour4(255, 174, 201, 255))
+                    .Append(new Colour4(237, 28, 36, 255))
+                    .Append(new Colour4(255, 201, 14, 255))
+                    .Append(new Colour4(255, 127, 39, 255))
+                    .Append(new Colour4(239, 228, 176, 255))
+                    .Append(new Colour4(255, 242, 0, 255))
+                    .Append(new Colour4(181, 230, 29, 255))
+                    .Append(new Colour4(34, 177, 76, 255))
+                    .Append(new Colour4(153, 217, 234, 255))
+                    .Append(new Colour4(0, 162, 232, 255))
+                    .Append(new Colour4(112, 146, 190, 255))
+                    .Append(new Colour4(63, 72, 204, 255))
+                    .Append(new Colour4(200, 191, 231, 255))
+                    .Append(new Colour4(163, 73, 164, 255))
+                    .Select(x => new SetColorBox(canvas, x));
 
                 GColors = new CubeGrid(canvas, colors);
                 GColors.RelativeSizeAxes = Axes.X;
