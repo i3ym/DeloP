@@ -28,7 +28,9 @@ namespace DeloP
             };
             Canvas.OnMove += () => CanvasContainer.Position = Canvas.Position;
 
-            ToolPanel = new ToolPanel(Canvas) { RelativeSizeAxes = Axes.Both };
+            ToolPanel = new ToolPanel(Canvas) { RelativeSizeAxes = Axes.Y, Width = 68 };
+            Canvas.Y = 2;
+            Canvas.X = ToolPanel.Width + Canvas.Y;
         }
         protected override void LoadComplete()
         {
@@ -39,17 +41,13 @@ namespace DeloP
 
             Children = new Drawable[]
             {
-                new Box() { Colour = Colour4.DarkGray, RelativeSizeAxes = Axes.Both },
-                new GridContainer()
+                new Box() { Colour = Colors.DarkBackground, RelativeSizeAxes = Axes.Both },
+                new Container()
                 {
-                    ColumnDimensions = new [] { new Dimension(GridSizeMode.Absolute, 68), new Dimension(GridSizeMode.AutoSize) },
-                    Content = new Drawable[][]
+                    Children = new Drawable[]
                     {
-                        new Drawable[]
-                        {
-                            ToolPanel,
-                            new Container() { Children = new Drawable[] { Canvas, CanvasContainer } }
-                        },
+                        new Container() { Children = new Drawable[] { Canvas, CanvasContainer }, RelativeSizeAxes = Axes.Both },
+                        ToolPanel,
                     },
                     RelativeSizeAxes = Axes.Both
                 }
