@@ -4,10 +4,10 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
 using osu.Framework.Input.Events;
-using osu.Framework.Platform;
 using osuTK.Input;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 
 namespace DeloP
 {
@@ -16,10 +16,26 @@ namespace DeloP
         public event Action<ITool> OnSetTool = delegate { };
         public event Action<Rgba32> OnSetMainColor = delegate { };
         public event Action<Rgba32> OnSetSecondaryColor = delegate { };
+        public event Action<Image<Rgba32>> OnImageReplace = delegate { };
 
         readonly Sprite Sprite, OverlaySprite;
-        public Image<Rgba32> Image { get; private set; }
-        public Image<Rgba32> OverlayImage { get; private set; }
+
+        Image<Rgba32> _Image = null!;
+        public Image<Rgba32> Image
+        {
+            get => _Image;
+            private set
+            {
+                _Image = value;
+                OverlayImage = new Image<Rgba32>(Configuration.Default, Image.Width, Image.Height, Color.Transparent);
+
+                Sprite.Texture = new Texture(Image.Width, Image.Height, true, osuTK.Graphics.ES30.All.Nearest);
+                OverlaySprite.Texture = new Texture(Image.Width, Image.Height, true, osuTK.Graphics.ES30.All.Nearest);
+
+                OnImageReplace(value);
+            }
+        }
+        public Image<Rgba32> OverlayImage { get; private set; } = null!;
 
         Rgba32 _MainColor = Color.Black;
         Rgba32 _SecondaryColor = Color.White;
@@ -53,22 +69,12 @@ namespace DeloP
             }
         }
 
-
         public Canvas()
         {
-            Image = new Image<Rgba32>(Configuration.Default, 1000, 1000, Color.White);
-            OverlayImage = new Image<Rgba32>(Configuration.Default, Image.Height, Image.Width, Color.Transparent);
-
-            Height = Image.Height;
-            Width = Image.Width;
-
             Sprite = new Sprite();
-            Sprite.RelativeSizeAxes = Axes.Both;
-            Sprite.Texture = new Texture(Image.Width, Image.Height, true, osuTK.Graphics.ES30.All.Nearest);
-
             OverlaySprite = new Sprite();
+            Sprite.RelativeSizeAxes = Axes.Both;
             OverlaySprite.RelativeSizeAxes = Axes.Both;
-            OverlaySprite.Texture = new Texture(OverlayImage.Width, OverlayImage.Height, true, osuTK.Graphics.ES30.All.Nearest);
         }
         protected override void LoadComplete()
         {
@@ -80,12 +86,21 @@ namespace DeloP
                 OverlaySprite
             };
 
+            Image = new Image<Rgba32>(Configuration.Default, 1000, 1000, Color.White);
             UpdateImage();
 
             MainColor = Color.Black;
             SecondaryColor = Color.White;
         }
 
+        public void ChangeSize(int width, int height)
+        {
+            var newimg = new Image<Rgba32>(Configuration.Default, width, height, Rgba32.White);
+            newimg.Mutate(ctx => ctx.DrawImage(Image, 1f));
+            Image = newimg;
+
+            UpdateImage();
+        }
 
         #region move listener
 
@@ -139,11 +154,10 @@ namespace DeloP
 
         #endregion
 
-
         (int x, int y) ToImagePosition(int mousex, int mousey) =>
             (
-                (int) (mousex / Scale.X / Sprite.DrawWidth * Image.Width),
-                (int) (mousey / Scale.Y / Sprite.DrawHeight * Image.Height) + 1
+                (int) (mousex / Scale.X / Sprite.DrawWidth * Image.Width) - (int) DrawPosition.X,
+                (int) (mousey / Scale.Y / Sprite.DrawHeight * Image.Height) + 1 - (int) DrawPosition.Y
             );
         public bool DrawPixelWithoutUpdate(int x, int y)
         {
@@ -159,7 +173,7 @@ namespace DeloP
                 UpdateImage();
         }
 
-        public void UpdateImage() => Sprite.Texture.SetData(new TextureUpload(Image.Clone()));
-        public void UpdateOverlay() => OverlaySprite.Texture.SetData(new TextureUpload(OverlayImage.Clone()));
+        public void UpdateImage() => Sprite.Texture.SetData(new NoDisposeTextureUpload(Image));
+        public void UpdateOverlay() => OverlaySprite.Texture.SetData(new NoDisposeTextureUpload(OverlayImage));
     }
 }

@@ -9,11 +9,25 @@ namespace DeloP
     {
         readonly ToolPanel ToolPanel;
         readonly Canvas Canvas;
+        readonly ResizableContainer CanvasContainer;
 
         public MainScreen()
         {
             Canvas = new Canvas();
-            Canvas.Scale = new osuTK.Vector2(1000 / Canvas.Image.Width, 1000 / Canvas.Image.Height);
+            CanvasContainer = new ResizableContainer();
+            CanvasContainer.Top.Alpha = CanvasContainer.Left.Alpha = CanvasContainer.TopLeft.Alpha = 0;
+            CanvasContainer.TopRight.Alpha = CanvasContainer.BottomLeft.Alpha = 0;
+
+            Canvas.OnImageReplace += img =>
+            {
+                Canvas.Width = CanvasContainer.Width = img.Width;
+                Canvas.Height = CanvasContainer.Height = img.Height;
+            };
+            CanvasContainer.OnResize += () =>
+            {
+                Canvas.ChangeSize((int) CanvasContainer.Width, (int) CanvasContainer.Height);
+                Canvas.Position = CanvasContainer.Position;
+            };
 
             ToolPanel = new ToolPanel(Canvas) { RelativeSizeAxes = Axes.Both };
         }
@@ -30,7 +44,14 @@ namespace DeloP
                 new GridContainer()
                 {
                     ColumnDimensions = new [] { new Dimension(GridSizeMode.Absolute, 100), new Dimension(GridSizeMode.AutoSize) },
-                    Content = new Drawable[][] { new Drawable[] { ToolPanel, Canvas }, },
+                    Content = new Drawable[][]
+                    {
+                        new Drawable[]
+                        {
+                            ToolPanel,
+                            new Container() { Children = new Drawable[] { Canvas, CanvasContainer } }
+                        },
+                    },
                     RelativeSizeAxes = Axes.Both
                 }
             };

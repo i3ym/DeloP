@@ -1,4 +1,5 @@
-﻿using System;
+﻿using System.Diagnostics;
+using System;
 using osu.Framework;
 
 namespace DeloP
@@ -8,9 +9,17 @@ namespace DeloP
         [STAThread]
         public static void Main(string[] args)
         {
-            using (var host = Host.GetSuitableHost("DeloP"))
-                try { host.Run(new MainScreen()); }
-                catch (Exception ex) { Console.WriteLine(ex); }
+            using var host = Host.GetSuitableHost("DeloP");
+
+            try
+            {
+                host.Run(new MainScreen());
+            }
+            catch
+            {
+                if (Debugger.IsAttached) host.Exit();
+                throw;
+            }
         }
     }
 }

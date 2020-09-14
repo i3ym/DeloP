@@ -114,7 +114,7 @@ namespace DeloP
 
                         return texture;
                     }
-                    catch { Console.WriteLine("res.sprites." + tool.SpriteName + ".png   was not found"); }
+                    catch { Console.WriteLine("Warning: res.sprites." + tool.SpriteName + ".png was not found"); }
 
                     return Texture.WhitePixel;
                 }
