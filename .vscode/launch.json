@@ -6,7 +6,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/bin/Debug/net5.0/Painter.dll",
+            "program": "${workspaceFolder}/bin/Debug/net5.0/DeloP.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",

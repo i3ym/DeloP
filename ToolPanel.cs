@@ -11,7 +11,7 @@ using osuTK.Input;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
 
-namespace Painter
+namespace DeloP
 {
     public class ToolPanel : CompositeDrawable
     {

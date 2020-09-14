@@ -1,6 +1,6 @@
 using osu.Framework.Graphics;
 
-namespace Painter
+namespace DeloP
 {
     public static class Colors
     {

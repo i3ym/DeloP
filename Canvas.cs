@@ -9,7 +9,7 @@ using osuTK.Input;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
-namespace Painter
+namespace DeloP
 {
     public class Canvas : CompositeDrawable
     {

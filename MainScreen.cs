@@ -3,7 +3,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 
-namespace Painter
+namespace DeloP
 {
     public class MainScreen : osu.Framework.Game
     {
@@ -21,7 +21,7 @@ namespace Painter
         {
             base.LoadComplete();
 
-            Window.Title = "Painter";
+            Window.Title = "DeloP";
             Window.WindowStateChanged += (obj, e) => Task.Run(async () => { await Task.Delay(5); Invalidate(); });
 
             Children = new Drawable[]

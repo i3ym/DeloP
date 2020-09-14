@@ -1,7 +1,7 @@
 using System;
 using osu.Framework.Graphics.Textures;
 
-namespace Painter
+namespace DeloP
 {
     public static class Textures
     {

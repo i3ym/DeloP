@@ -5,7 +5,7 @@ using SixLabors.ImageSharp.Advanced;
 using SixLabors.ImageSharp.PixelFormats;
 using System.Collections.Generic;
 
-namespace Painter
+namespace DeloP
 {
     public interface ITool
     {

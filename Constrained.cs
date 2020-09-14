@@ -1,7 +1,7 @@
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
-namespace Painter
+namespace DeloP
 {
     public readonly struct Constrained
     {
