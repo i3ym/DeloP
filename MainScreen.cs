@@ -2,6 +2,8 @@ using System.Threading.Tasks;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
+using osu.Framework.Input.Events;
+using osuTK.Input;
 
 namespace DeloP
 {
@@ -42,16 +44,63 @@ namespace DeloP
             Children = new Drawable[]
             {
                 new Box() { Colour = Colors.DarkBackground, RelativeSizeAxes = Axes.Both },
-                new Container()
-                {
-                    Children = new Drawable[]
-                    {
-                        new Container() { Children = new Drawable[] { Canvas, CanvasContainer }, RelativeSizeAxes = Axes.Both },
-                        ToolPanel,
-                    },
-                    RelativeSizeAxes = Axes.Both
-                }
+                new Container() { Children = new Drawable[] { Canvas, CanvasContainer }, RelativeSizeAxes = Axes.Both },
+                ToolPanel,
             };
         }
+
+
+        #region move listener
+
+        enum DrawingType : byte { None, Left, Right }
+        DrawingType DrawType = DrawingType.None;
+        int LastMouseX, LastMouseY;
+
+        protected override bool OnMouseDown(MouseDownEvent e)
+        {
+            if (base.OnMouseDown(e)) return true;
+            if (!Canvas.BoundingBox.Contains(e.MousePosition)) return false;
+
+            if (e.Button == MouseButton.Left) DrawType = DrawingType.Left;
+            else if (e.Button == MouseButton.Right) DrawType = DrawingType.Right;
+            else return false;
+
+
+            (LastMouseX, LastMouseY) = ((int) e.MouseDownPosition.X, (int) e.MouseDownPosition.Y);
+
+            var (x, y) = Canvas.ToImagePosition((int) e.MouseDownPosition.X, (int) e.MouseDownPosition.Y);
+            if (e.Button == MouseButton.Left) Canvas.CurrentTool.OnStart(x, y, Canvas);
+            else if (e.Button == MouseButton.Right) Canvas.CurrentTool.OnStartRight(x, y, Canvas);
+
+            return false;
+        }
+        protected override void OnMouseUp(MouseUpEvent e)
+        {
+            base.OnMouseUp(e);
+            DrawType = DrawingType.None;
+
+            var (sx, sy) = Canvas.ToImagePosition((int) e.MouseDownPosition.X, (int) e.MouseDownPosition.Y);
+            var (ex, ey) = Canvas.ToImagePosition((int) e.MousePosition.X, (int) e.MousePosition.Y);
+
+            if (e.Button == MouseButton.Left) Canvas.CurrentTool.OnEnd(sx, sy, ex, ey, Canvas);
+            else if (e.Button == MouseButton.Right) Canvas.CurrentTool.OnEndRight(sx, sy, ex, ey, Canvas);
+        }
+        protected override bool OnMouseMove(MouseMoveEvent e)
+        {
+            if (base.OnMouseMove(e)) return true;
+            if (DrawType == DrawingType.None) return false;
+
+            var (x, y) = Canvas.ToImagePosition((int) LastMouseX, (int) LastMouseY);
+            var (tx, ty) = Canvas.ToImagePosition((int) e.MousePosition.X, (int) e.MousePosition.Y);
+
+            (LastMouseX, LastMouseY) = ((int) e.MousePosition.X, (int) e.MousePosition.Y);
+
+            if (DrawType == DrawingType.Left) Canvas.CurrentTool.OnMove(x, y, tx, ty, Canvas);
+            else if (DrawType == DrawingType.Right) Canvas.CurrentTool.OnMoveRight(x, y, tx, ty, Canvas);
+
+            return false;
+        }
+
+        #endregion
     }
 }
