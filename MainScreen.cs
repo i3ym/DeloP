@@ -43,7 +43,7 @@ namespace DeloP
                 new Box() { Colour = Colour4.DarkGray, RelativeSizeAxes = Axes.Both },
                 new GridContainer()
                 {
-                    ColumnDimensions = new [] { new Dimension(GridSizeMode.Absolute, 100), new Dimension(GridSizeMode.AutoSize) },
+                    ColumnDimensions = new [] { new Dimension(GridSizeMode.Absolute, 80), new Dimension(GridSizeMode.AutoSize) },
                     Content = new Drawable[][]
                     {
                         new Drawable[]
