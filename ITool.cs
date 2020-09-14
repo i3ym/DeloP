@@ -186,9 +186,12 @@ namespace DeloP
             (startX, endX) = (Math.Min(startX, endX), Math.Max(startX, endX));
             for (int i = 0; i < thickness; i++)
             {
+                var x = Math.Max(0, Math.Min(image.Width - 1, startX));
+                var len = Math.Max(0, Math.Min(image.Width - 1 - x, endX - startX));
+
                 var pos = y + i - (int) thickness / 2;
                 if (pos >= 0 && pos < image.Height)
-                    image.GetPixelRowSpan(pos).Slice(startX, endX - startX).Fill(color);
+                    image.GetPixelRowSpan(pos).Slice(x, len).Fill(color);
             }
         }
         static void DrawAngledLine(int startX, int startY, int endX, int endY, Image<Rgba32> image, Rgba32 color, float thickness)
