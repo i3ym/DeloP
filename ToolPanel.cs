@@ -56,6 +56,7 @@ namespace DeloP
             public ToolsContainer(Canvas canvas)
             {
                 var tools = Enumerable.Empty<ITool>()
+                    .Append(new MoveTool())
                     .Append(new PencilTool())
                     .Append(new EraserTool())
                     .Append(new PipetteTool())
