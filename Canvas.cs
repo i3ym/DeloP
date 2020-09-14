@@ -4,10 +4,12 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
 using osu.Framework.Input.Events;
+using osu.Framework.Layout;
 using osuTK.Input;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using SixLabors.Primitives;
 
 namespace DeloP
 {
@@ -17,6 +19,7 @@ namespace DeloP
         public event Action<Rgba32> OnSetMainColor = delegate { };
         public event Action<Rgba32> OnSetSecondaryColor = delegate { };
         public event Action<Image<Rgba32>> OnImageReplace = delegate { };
+        public event Action OnMove = delegate { };
 
         readonly Sprite Sprite, OverlaySprite;
 
@@ -93,13 +96,20 @@ namespace DeloP
             SecondaryColor = Color.White;
         }
 
-        public void ChangeSize(int width, int height)
+        public void ChangeSize(int width, int height) => ChangeSize(0, 0, width, height);
+        public void ChangeSize(int dx, int dy, int width, int height)
         {
             var newimg = new Image<Rgba32>(Configuration.Default, width, height, Rgba32.White);
-            newimg.Mutate(ctx => ctx.DrawImage(Image, 1f));
+            newimg.Mutate(ctx => ctx.DrawImage(Image, new Point(dx, dy), 1f));
             Image = newimg;
 
             UpdateImage();
+        }
+
+        protected override bool OnInvalidate(Invalidation invalidation, InvalidationSource source)
+        {
+            OnMove();
+            return base.OnInvalidate(invalidation, source);
         }
 
         #region move listener

@@ -15,18 +15,16 @@ namespace DeloP
         {
             Canvas = new Canvas();
             CanvasContainer = new ResizableContainer();
-            CanvasContainer.Top.Alpha = CanvasContainer.Left.Alpha = CanvasContainer.TopLeft.Alpha = 0;
-            CanvasContainer.TopRight.Alpha = CanvasContainer.BottomLeft.Alpha = 0;
 
             Canvas.OnImageReplace += img =>
             {
                 Canvas.Width = CanvasContainer.Width = img.Width;
                 Canvas.Height = CanvasContainer.Height = img.Height;
             };
-            CanvasContainer.OnResize += () =>
+            CanvasContainer.OnResize += e =>
             {
-                Canvas.ChangeSize((int) CanvasContainer.Width, (int) CanvasContainer.Height);
-                Canvas.Position = CanvasContainer.Position;
+                Canvas.ChangeSize((int) -(e.EndPos.X - e.StartPos.X), (int) -(e.EndPos.Y - e.StartPos.Y), (int) e.EndSize.X, (int) e.EndSize.Y);
+                Canvas.Position = e.EndPos;
             };
             Canvas.OnMove += () => CanvasContainer.Position = Canvas.Position;
 
@@ -44,7 +42,7 @@ namespace DeloP
                 new Box() { Colour = Colour4.DarkGray, RelativeSizeAxes = Axes.Both },
                 new GridContainer()
                 {
-                    ColumnDimensions = new [] { new Dimension(GridSizeMode.Absolute, 80), new Dimension(GridSizeMode.AutoSize) },
+                    ColumnDimensions = new [] { new Dimension(GridSizeMode.Absolute, 68), new Dimension(GridSizeMode.AutoSize) },
                     Content = new Drawable[][]
                     {
                         new Drawable[]

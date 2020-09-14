@@ -93,10 +93,13 @@ namespace DeloP
                     Canvas = canvas;
                     Tool = tool;
 
-                    OutBorderMultiplier = 2f;
                     BackgroundBox.Texture = Textures.SelectedTool.Value;
                     BackgroundBox.Colour = Colors.ToolSelection;
                     DarkBorderBox.Alpha = BackgroundBox.Alpha = 0;
+
+                    OutBorder = 1;
+                    InBorder = 5;
+                    Sprite.Width = Sprite.Height = 16;
 
                     canvas.OnSetTool += t =>
                     {
@@ -174,7 +177,7 @@ namespace DeloP
                     .Append(new Colour4(163, 73, 164, 255))
                     .Select(x => new SetColorBox(canvas, x));
 
-                GColors = new CubeGrid(canvas, colors);
+                GColors = new CubeGrid(canvas, colors, new MarginPadding(6));
                 GColors.RelativeSizeAxes = Axes.X;
                 AddInternal(GColors);
             }
@@ -182,7 +185,7 @@ namespace DeloP
             protected override bool OnInvalidate(Invalidation invalidation, InvalidationSource source)
             {
                 CColors.Height = CColors.DrawWidth;
-                GColors.Y = CColors.DrawHeight;
+                GColors.Y = CColors.DrawHeight - 15;
                 return base.OnInvalidate(invalidation, source);
             }
 
@@ -236,7 +239,14 @@ namespace DeloP
 
                     protected readonly Canvas Canvas;
 
-                    public ChooseColorBox(Canvas canvas, Colour4 color) : base(color) => Canvas = canvas;
+                    public ChooseColorBox(Canvas canvas, Colour4 color) : base(color)
+                    {
+                        Canvas = canvas;
+
+                        OutBorder = 3;
+                        InBorder = 1;
+                        Sprite.Width = Sprite.Height = 26;
+                    }
 
                     protected override bool OnMouseDown(MouseDownEvent e)
                     {
@@ -250,7 +260,14 @@ namespace DeloP
             {
                 protected readonly Colour4 Color;
 
-                public ColorBox(Colour4 color) : base(Texture.WhitePixel) => Sprite.Colour = Color = color;
+                public ColorBox(Colour4 color) : base(Texture.WhitePixel)
+                {
+                    Sprite.Colour = Color = color;
+
+                    OutBorder = 0;
+                    InBorder = 1;
+                    Sprite.Width = Sprite.Height = 18;
+                }
             }
             class SetColorBox : ColorBox
             {
@@ -273,8 +290,7 @@ namespace DeloP
         abstract class SpriteBox : CompositeDrawable
         {
             protected readonly Sprite Sprite, DarkBorderBox, BackgroundBox;
-            protected float OutBorderMultiplier = 1f;
-            protected float InBorderMultiplier = 2f;
+            protected int InBorder = 1, OutBorder = 1;
 
             public SpriteBox(Texture texture)
             {
@@ -287,14 +303,12 @@ namespace DeloP
 
             protected override bool OnInvalidate(Invalidation invalidation, InvalidationSource source)
             {
-                var outb = (int) DrawWidth / (11 * OutBorderMultiplier);
-                var inb = (int) DrawWidth / (11 * InBorderMultiplier);
+                Sprite.X = Sprite.Y = /*outb + inb +*/ DrawWidth / 2 - Sprite.Width / 2;
+                DarkBorderBox.X = DarkBorderBox.Y = OutBorder;
 
-                Sprite.X = Sprite.Y = outb + inb;
-                DarkBorderBox.X = DarkBorderBox.Y = outb;
-
-                DarkBorderBox.Width = DarkBorderBox.Height = BackgroundBox.DrawWidth - (outb * 2);
-                Sprite.Width = Sprite.Height = DarkBorderBox.DrawWidth - (inb * 2);
+                DarkBorderBox.Width = DarkBorderBox.Height = BackgroundBox.DrawWidth - (OutBorder * 2);
+                // Sprite.Width = Sprite.Height = DarkBorderBox.DrawWidth - (inb * 2);
+                Width = Height = Sprite.Width + (OutBorder + InBorder) * 2;
 
                 return base.OnInvalidate(invalidation, source);
             }
@@ -320,12 +334,15 @@ namespace DeloP
 
                 InternalChild = Grid;
             }
+            public CubeGrid(Canvas canvas, IEnumerable<Drawable> children, MarginPadding padding) : this(canvas, children) =>
+                Padding = padding;
+
 
             protected override bool OnInvalidate(Invalidation invalidation, InvalidationSource source)
             {
                 foreach (var content in Grid.Content)
                     foreach (var child in content)
-                        child.Width = child.Height = DrawWidth / 2;
+                        child.X = child.Y = DrawWidth / 2 / 2 - child.Width / 2 - (int) Padding.Left / 2;
 
                 Height = Grid.Content.Length * DrawWidth / 2;
                 return base.OnInvalidate(invalidation, source);

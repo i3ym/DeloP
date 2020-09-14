@@ -331,7 +331,6 @@ namespace DeloP
             }
         }
     }
-
     public class PipetteTool : ITool
     {
         public float Thickness { get; set; }

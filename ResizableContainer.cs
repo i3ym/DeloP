@@ -3,6 +3,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Input.Events;
+using osuTK;
 
 namespace DeloP
 {
@@ -10,10 +11,12 @@ namespace DeloP
     {
         const float BoxSize = 10f;
 
-        public event Action OnResize = delegate { };
+        public event Action<ResizeEvent> OnResize = delegate { };
 
         public readonly DraggableBox TopRight, BottomRight, TopLeft, BottomLeft;
         public readonly DraggableBox Right, Left, Top, Bottom;
+
+        Vector2 StartPos, StartSize;
 
         public ResizableContainer()
         {
@@ -61,16 +64,22 @@ namespace DeloP
                 if ((e.Target.Anchor & Anchor.x2) == Anchor.x2) // right
                     Width += e.Delta.X;
             };
-            box.DragEndEvent += _ => OnResize();
+            box.DragStartEvent += _ =>
+            {
+                StartPos = DrawPosition;
+                StartSize = DrawSize;
+            };
+            box.DragEndEvent += _ => OnResize(new ResizeEvent(StartPos, StartSize, DrawPosition, DrawSize));
 
             return box;
         }
         DraggableBox CreateSelectionBox() => new DraggableBox(CreateSelectionDrawable());
-        protected virtual Drawable CreateSelectionDrawable() => new Box() { Colour = Colour4.Green };
+        protected virtual Drawable CreateSelectionDrawable() => new Box() { Colour = Colors.Background };
 
 
         public class DraggableBox : CompositeDrawable
         {
+            public event Action<DragStartEvent> DragStartEvent = delegate { };
             public event Action<DragEvent> DragEvent = delegate { };
             public event Action<DragEndEvent> DragEndEvent = delegate { };
 
@@ -84,7 +93,11 @@ namespace DeloP
                 InternalChild = child;
             }
 
-            protected override bool OnDragStart(DragStartEvent e) => true;
+            protected override bool OnDragStart(DragStartEvent e)
+            {
+                DragStartEvent(e);
+                return true;
+            }
             protected override void OnDrag(DragEvent e)
             {
                 DragEvent(e);
@@ -94,6 +107,18 @@ namespace DeloP
             {
                 DragEndEvent(e);
                 base.OnDragEnd(e);
+            }
+        }
+        public readonly struct ResizeEvent
+        {
+            public readonly Vector2 StartPos, StartSize, EndPos, EndSize;
+
+            public ResizeEvent(Vector2 startPos, Vector2 startSize, Vector2 endPos, Vector2 endSize)
+            {
+                StartPos = startPos;
+                StartSize = startSize;
+                EndPos = endPos;
+                EndSize = endSize;
             }
         }
     }
