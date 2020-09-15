@@ -31,12 +31,18 @@ namespace DeloP
                 OverlayImage = new Image<Rgba32>(Configuration.Default, Image.Width, Image.Height, Color.Transparent);
 
                 Sprite.Texture = new Texture(Image.Width, Image.Height, true, osuTK.Graphics.ES30.All.Nearest);
+                Sprite.Texture.TextureGL.BypassTextureUploadQueueing = true;
                 OverlaySprite.Texture = new Texture(Image.Width, Image.Height, true, osuTK.Graphics.ES30.All.Nearest);
+                OverlaySprite.Texture.TextureGL.BypassTextureUploadQueueing = true;
+
+                TextureImageUpload = new CachedTextureUpload(Image);
+                OverlayTextureUpload = new CachedTextureUpload(OverlayImage);
 
                 OnImageReplace(value);
             }
         }
         public Image<Rgba32> OverlayImage { get; private set; } = null!;
+        CachedTextureUpload TextureImageUpload = null!, OverlayTextureUpload = null!;
 
         Rgba32 _MainColor = Color.Black;
         Rgba32 _SecondaryColor = Color.White;
@@ -69,6 +75,7 @@ namespace DeloP
                 OnSetTool(value);
             }
         }
+
 
         public Canvas()
         {
@@ -116,7 +123,7 @@ namespace DeloP
                 (int) (mousey / Scale.Y / Sprite.DrawHeight * Image.Height) + 1 - (int) DrawPosition.Y
             );
 
-        public void UpdateImage() => Sprite.Texture.SetData(new NoDisposeTextureUpload(Image));
-        public void UpdateOverlay() => OverlaySprite.Texture.SetData(new NoDisposeTextureUpload(OverlayImage));
+        public void UpdateImage() => Sprite.Texture.SetData(TextureImageUpload);
+        public void UpdateOverlay() => OverlaySprite.Texture.SetData(OverlayTextureUpload);
     }
 }
