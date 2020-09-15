@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
@@ -77,6 +78,8 @@ namespace DeloP
         protected override void OnMouseUp(MouseUpEvent e)
         {
             base.OnMouseUp(e);
+            if (DrawType == DrawingType.None) return;
+
             DrawType = DrawingType.None;
 
             var (sx, sy) = Canvas.ToImagePosition((int) e.MouseDownPosition.X, (int) e.MouseDownPosition.Y);
