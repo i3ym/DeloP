@@ -21,15 +21,19 @@ namespace DeloP
 
             Canvas.OnImageReplace += img =>
             {
-                Canvas.Width = CanvasContainer.Width = img.Width;
-                Canvas.Height = CanvasContainer.Height = img.Height;
+                Canvas.Width = img.Width;
+                Canvas.Height = img.Height;
+
+                CanvasContainer.Width = Canvas.Width * Canvas.Scale.X;
+                CanvasContainer.Height = Canvas.Height * Canvas.Scale.Y;
             };
             CanvasContainer.OnResize += e =>
             {
-                Canvas.ChangeSize((int) -(e.EndPos.X - e.StartPos.X), (int) -(e.EndPos.Y - e.StartPos.Y), (int) e.EndSize.X, (int) e.EndSize.Y);
+                Canvas.ChangeSize((int) -((e.EndPos.X - e.StartPos.X) / Canvas.Scale.X), (int) -((e.EndPos.Y - e.StartPos.Y) / Canvas.Scale.Y),
+                    (int) (e.EndSize.X / Canvas.Scale.X), (int) (e.EndSize.Y / Canvas.Scale.Y));
                 Canvas.Position = e.EndPos;
             };
-            Canvas.OnMove += () => CanvasContainer.Position = Canvas.Position;
+            Canvas.OnMove += () => CanvasContainer.Position = Canvas.DrawPosition;
 
             ToolPanel = new ToolPanel(Canvas) { RelativeSizeAxes = Axes.Y, Width = 68 };
             Canvas.Y = 2;

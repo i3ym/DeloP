@@ -119,8 +119,8 @@ namespace DeloP
 
         public (int x, int y) ToImagePosition(int mousex, int mousey) =>
             (
-                (int) (mousex / Scale.X / Sprite.DrawWidth * Image.Width) - (int) DrawPosition.X,
-                (int) (mousey / Scale.Y / Sprite.DrawHeight * Image.Height) + 1 - (int) DrawPosition.Y
+                (int) ((mousex - DrawPosition.X) / Scale.X / Sprite.DrawWidth * Image.Width),
+                (int) ((mousey - DrawPosition.Y) / Scale.Y / Sprite.DrawHeight * Image.Height)
             );
 
         public void UpdateImage() => Sprite.Texture.SetData(TextureImageUpload);
