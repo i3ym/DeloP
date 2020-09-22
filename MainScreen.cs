@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
@@ -11,6 +10,7 @@ namespace DeloP
     public class MainScreen : osu.Framework.Game
     {
         readonly ToolPanel ToolPanel;
+        readonly ToolSettingsPanel ToolSettingsPanel;
         readonly Canvas Canvas;
         readonly ResizableContainer CanvasContainer;
 
@@ -35,9 +35,17 @@ namespace DeloP
             };
             Canvas.OnMove += () => CanvasContainer.Position = Canvas.DrawPosition;
 
-            ToolPanel = new ToolPanel(Canvas) { RelativeSizeAxes = Axes.Y, Width = 68 };
-            Canvas.Y = 2;
-            Canvas.X = ToolPanel.Width + Canvas.Y;
+            ToolSettingsPanel = new ToolSettingsPanel(Canvas);
+            ToolSettingsPanel.Height = 32;
+            ToolSettingsPanel.RelativeSizeAxes = Axes.X;
+
+            ToolPanel = new ToolPanel(Canvas);
+            ToolPanel.RelativeSizeAxes = Axes.Y;
+            ToolPanel.Y = ToolSettingsPanel.Height;
+            ToolPanel.Width = 68;
+
+            Canvas.Y = ToolSettingsPanel.Height + 2;
+            Canvas.X = ToolPanel.Width + 2;
         }
         protected override void LoadComplete()
         {
@@ -51,6 +59,7 @@ namespace DeloP
                 new Box() { Colour = Colors.DarkBackground, RelativeSizeAxes = Axes.Both },
                 new Container() { Children = new Drawable[] { Canvas, CanvasContainer }, RelativeSizeAxes = Axes.Both },
                 ToolPanel,
+                ToolSettingsPanel,
             };
         }
 

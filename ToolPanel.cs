@@ -46,7 +46,7 @@ namespace DeloP
 
         protected override bool OnInvalidate(Invalidation invalidation, InvalidationSource source)
         {
-            CColors.Y = CTools.DrawHeight + 10;
+            CColors.Y = CTools.DrawPosition.Y + CTools.DrawHeight + 10;
             return base.OnInvalidate(invalidation, source);
         }
 

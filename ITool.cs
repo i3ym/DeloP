@@ -4,11 +4,14 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Advanced;
 using SixLabors.ImageSharp.PixelFormats;
 using System.Collections.Generic;
+using osu.Framework.Graphics;
 
 namespace DeloP
 {
     public interface ITool
     {
+        IReadOnlyList<Drawable> Settings => Array.Empty<Drawable>();
+
         string SpriteName => GetType().Name[..^4].ToLowerInvariant();
         float Thickness { get; set; }
 
@@ -23,6 +26,7 @@ namespace DeloP
 
     public class PencilTool : ITool
     {
+        IReadOnlyList<Drawable> ITool.Settings => new Drawable[] { new ThicknessToolSettings(this), new ThicknessToolSettings(this) };
         public float Thickness { get; set; } = 1f;
 
         public void OnStart(int x, int y, Canvas canvas) => DrawLine(x, y, x, y, canvas, canvas.MainColor);
