@@ -5,6 +5,7 @@ using SixLabors.ImageSharp.Advanced;
 using SixLabors.ImageSharp.PixelFormats;
 using System.Collections.Generic;
 using osu.Framework.Graphics;
+using DeloP.Controls;
 
 namespace DeloP
 {
@@ -26,7 +27,7 @@ namespace DeloP
 
     public class PencilTool : ITool
     {
-        IReadOnlyList<Drawable> ITool.Settings => new Drawable[] { new ThicknessToolSettings(this), new ThicknessToolSettings(this) };
+        IReadOnlyList<Drawable> ITool.Settings => new Drawable[] { new ThicknessToolSetting(this), new ThicknessToolSetting(this) };
         public float Thickness { get; set; } = 1f;
 
         public void OnStart(int x, int y, Canvas canvas) => DrawLine(x, y, x, y, canvas, canvas.MainColor);

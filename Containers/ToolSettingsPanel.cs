@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
+using DeloP.Controls;
 
-namespace DeloP
+namespace DeloP.Containers
 {
     public class ToolSettingsPanel : CompositeDrawable
     {

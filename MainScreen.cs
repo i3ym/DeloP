@@ -1,4 +1,6 @@
 using System.Threading.Tasks;
+using DeloP.Containers;
+using DeloP.Controls;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;

@@ -5,7 +5,7 @@ using osu.Framework.Graphics.Shapes;
 using osu.Framework.Input.Events;
 using osuTK;
 
-namespace DeloP
+namespace DeloP.Containers
 {
     public class ResizableContainer : CompositeDrawable
     {

@@ -9,7 +9,7 @@ using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.Primitives;
 
-namespace DeloP
+namespace DeloP.Controls
 {
     public class Canvas : CompositeDrawable
     {

@@ -10,8 +10,9 @@ using SixLabors.ImageSharp.PixelFormats;
 using osuTK.Input;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
+using DeloP.Controls;
 
-namespace DeloP
+namespace DeloP.Containers
 {
     public class ToolPanel : CompositeDrawable
     {

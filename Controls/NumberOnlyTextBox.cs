@@ -1,7 +1,7 @@
 using System;
 using osu.Framework.Graphics.UserInterface;
 
-namespace DeloP
+namespace DeloP.Controls
 {
     public class NumberOnlyTextBox : BasicTextBox
     {

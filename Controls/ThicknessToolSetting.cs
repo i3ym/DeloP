@@ -3,13 +3,13 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Layout;
 
-namespace DeloP
+namespace DeloP.Controls
 {
-    public class ThicknessToolSettings : CompositeDrawable
+    public class ThicknessToolSetting : CompositeDrawable
     {
         readonly NumericUpDown Input;
 
-        public ThicknessToolSettings(ITool tool)
+        public ThicknessToolSetting(ITool tool)
         {
             Input = new NumericUpDown();
             Input.RelativeSizeAxes = Axes.Both;
