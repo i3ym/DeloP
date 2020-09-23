@@ -20,7 +20,7 @@ namespace DeloP.Containers
         {
             canvas.OnSetTool += t =>
             {
-                Children = t.Settings.Select(x => { x.RelativeSizeAxes = Axes.Y; return x; }).ToArray();
+                Children = t.GetSettings(canvas).Select(x => { x.RelativeSizeAxes = Axes.Y; return x; }).ToArray();
             };
 
 

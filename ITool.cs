@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Concurrent;
 using System;
 using SixLabors.ImageSharp;
@@ -11,8 +12,6 @@ namespace DeloP
 {
     public interface ITool
     {
-        IReadOnlyList<Drawable> Settings => Array.Empty<Drawable>();
-
         string SpriteName => GetType().Name[..^4].ToLowerInvariant();
         float Thickness { get; set; }
 
@@ -23,11 +22,13 @@ namespace DeloP
         void OnStartRight(int x, int y, Canvas canvas) { }
         void OnEndRight(int sx, int sy, int ex, int ey, Canvas canvas) { }
         void OnMoveRight(int sx, int sy, int ex, int ey, Canvas canvas) { }
+
+        public static IReadOnlyList<Drawable> GetBaseSettings(Canvas canvas) => new Drawable[] { new ZoomSetting(canvas) };
+        IReadOnlyList<Drawable> GetSettings(Canvas canvas) => GetBaseSettings(canvas);
     }
 
     public class PencilTool : ITool
     {
-        IReadOnlyList<Drawable> ITool.Settings => new Drawable[] { new ThicknessToolSetting(this), new ThicknessToolSetting(this) };
         public float Thickness { get; set; } = 1f;
 
         public void OnStart(int x, int y, Canvas canvas) => DrawLine(x, y, x, y, canvas, canvas.MainColor);
@@ -43,6 +44,8 @@ namespace DeloP
             ShapeTool.DrawLine(sx, sy, ex, ey, canvas.Image, color, Thickness);
             canvas.UpdateImage();
         }
+
+        IReadOnlyList<Drawable> ITool.GetSettings(Canvas canvas) => ITool.GetBaseSettings(canvas).Append(new ThicknessToolSetting(this)).ToArray();
     }
     public class EraserTool : ITool
     {

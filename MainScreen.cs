@@ -11,10 +11,11 @@ namespace DeloP
 {
     public class MainScreen : osu.Framework.Game
     {
+        public readonly Canvas Canvas;
+        public readonly ResizableContainer CanvasContainer;
+
         readonly ToolPanel ToolPanel;
         readonly ToolSettingsPanel ToolSettingsPanel;
-        readonly Canvas Canvas;
-        readonly ResizableContainer CanvasContainer;
 
         public MainScreen()
         {
