@@ -3,6 +3,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.UserInterface;
+using osu.Framework.Layout;
 
 namespace DeloP.Controls
 {
@@ -16,18 +17,18 @@ namespace DeloP.Controls
             HandleDrawable = new Box();
             HandleDrawable.RelativeSizeAxes = Axes.Y;
             HandleDrawable.Width = 6;
-            HandleDrawable.Colour = Colors.DarkBackground;
+            HandleDrawable.Colour = Colors.White;
             HandleDrawable.RelativePositionAxes = Axes.X;
             HandleDrawable.Origin = Anchor.TopCentre;
 
             Text = new SpriteText();
             Text.Colour = Colour4.White;
-            Text.RelativeSizeAxes = Axes.Both;
+            Text.Anchor = Text.Origin = Anchor.Centre;
 
 
             var border = new BorderContainer();
             border.RelativeSizeAxes = Axes.Both;
-            border.BorderColour = Colour4.White;
+            border.BorderColour = Colors.White;
             border.BackgroundColour = Colors.ToolSelection;
             border.BorderThickness = 2;
             border.Masking = true;
