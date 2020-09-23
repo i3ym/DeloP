@@ -44,7 +44,6 @@ namespace DeloP.Containers
             Border.RelativeSizeAxes = Axes.Both;
 
             Background = new Box();
-            Background.RelativeSizeAxes = Axes.Both;
             Background.Colour = Colour4.Transparent;
 
             Container = new Container();
@@ -62,9 +61,9 @@ namespace DeloP.Containers
         {
             if ((invalidation & Invalidation.Layout) == 0) return base.OnInvalidate(invalidation, source);
 
-            Container.X = Container.Y = BorderThickness;
-            Container.Width = DrawWidth - BorderThickness * 2;
-            Container.Height = DrawHeight - BorderThickness * 2;
+            Background.X = Background.Y = Container.X = Container.Y = BorderThickness;
+            Background.Width = Container.Width = DrawWidth - BorderThickness * 2;
+            Background.Height = Container.Height = DrawHeight - BorderThickness * 2;
 
             return base.OnInvalidate(invalidation, source);
         }
