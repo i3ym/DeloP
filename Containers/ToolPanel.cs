@@ -65,7 +65,6 @@ namespace DeloP.Containers
                     .Append(new RectangleTool())
                     .Append(new TriangleTool())
                     .Append(new FillTool())
-                    .Select(x => { x.Thickness = 5f; return x; })
                     .Select(x => new ToolDrawable(canvas, x));
 
 

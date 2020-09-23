@@ -21,9 +21,6 @@ namespace DeloP
         void OnStartRight(int x, int y, Canvas canvas) { }
         void OnEndRight(int sx, int sy, int ex, int ey, Canvas canvas) { }
         void OnMoveRight(int sx, int sy, int ex, int ey, Canvas canvas) { }
-
-        public static IReadOnlyList<Drawable> GetBaseSettings(Canvas canvas) => new Drawable[] { new ZoomSetting(canvas) };
-        IReadOnlyList<Drawable> GetSettings(Canvas canvas) => GetBaseSettings(canvas);
     }
     public interface IThicknessTool : ITool
     {
@@ -47,8 +44,6 @@ namespace DeloP
             ShapeTool.DrawLine(sx, sy, ex, ey, canvas.Image, color, Thickness);
             canvas.UpdateImage();
         }
-
-        IReadOnlyList<Drawable> ITool.GetSettings(Canvas canvas) => ITool.GetBaseSettings(canvas).Append(new ThicknessToolSetting(this)).ToArray();
     }
     public class EraserTool : IThicknessTool
     {

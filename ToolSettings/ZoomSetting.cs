@@ -1,10 +1,10 @@
+using DeloP.Controls;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
-using osu.Framework.Graphics.Containers;
 
-namespace DeloP.Controls
+namespace DeloP.ToolSettings
 {
-    public class ZoomSetting : CompositeDrawable
+    public class ZoomSetting : ToolSettingBase
     {
         public ZoomSetting(Canvas canvas)
         {

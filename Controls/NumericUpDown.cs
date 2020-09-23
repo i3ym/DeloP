@@ -13,13 +13,15 @@ namespace DeloP.Controls
     {
         public event Action<int> OnChangeValue = delegate { };
 
-        int _Number;
-        public int Number
+        int _Value;
+        public int Value
         {
-            get => _Number;
+            get => _Value;
             set
             {
-                _Number = value;
+                if (value < 1) value = 1;
+
+                _Value = value;
                 TextBox.Text = value.ToString();
 
                 OnChangeValue(value);
@@ -62,11 +64,11 @@ namespace DeloP.Controls
             Width = Up.X + Up.Width;
 
 
-            TextBox.OnTextChanged += () => Number = int.Parse(TextBox.Text);
-            Up.Action += () => Number++;
-            Down.Action += () => Number--;
+            TextBox.OnTextChanged += () => Value = int.Parse(TextBox.Text);
+            Up.Action += () => Value++;
+            Down.Action += () => Value--;
 
-            Number = 1;
+            Value = 1;
         }
 
         protected override bool OnInvalidate(Invalidation invalidation, InvalidationSource source)
