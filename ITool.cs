@@ -13,7 +13,6 @@ namespace DeloP
     public interface ITool
     {
         string SpriteName => GetType().Name[..^4].ToLowerInvariant();
-        int Thickness { get; set; }
 
         void OnStart(int x, int y, Canvas canvas);
         void OnEnd(int sx, int sy, int ex, int ey, Canvas canvas);
@@ -26,8 +25,12 @@ namespace DeloP
         public static IReadOnlyList<Drawable> GetBaseSettings(Canvas canvas) => new Drawable[] { new ZoomSetting(canvas) };
         IReadOnlyList<Drawable> GetSettings(Canvas canvas) => GetBaseSettings(canvas);
     }
+    public interface IThicknessTool : ITool
+    {
+        int Thickness { get; set; }
+    }
 
-    public class PencilTool : ITool
+    public class PencilTool : IThicknessTool
     {
         public int Thickness { get; set; } = 1;
 
@@ -47,7 +50,7 @@ namespace DeloP
 
         IReadOnlyList<Drawable> ITool.GetSettings(Canvas canvas) => ITool.GetBaseSettings(canvas).Append(new ThicknessToolSetting(this)).ToArray();
     }
-    public class EraserTool : ITool
+    public class EraserTool : IThicknessTool
     {
         public int Thickness { get; set; } = 1;
 
@@ -145,7 +148,7 @@ namespace DeloP
         }
     }
 
-    public abstract class ShapeTool : ITool
+    public abstract class ShapeTool : IThicknessTool
     {
         public int Thickness { get; set; } = 1;
         int StartX, StartY;
@@ -280,8 +283,6 @@ namespace DeloP
 
     public class FillTool : ITool
     {
-        public int Thickness { get; set; }
-
         public void OnStart(int x, int y, Canvas canvas)
         {
             Fill(x, y, canvas.Image, canvas.MainColor);
@@ -344,8 +345,6 @@ namespace DeloP
     }
     public class PipetteTool : ITool
     {
-        public int Thickness { get; set; }
-
         public void OnStart(int x, int y, Canvas canvas) => canvas.MainColor = canvas.Image[x, y];
         public void OnEnd(int sx, int sy, int ex, int ey, Canvas canvas) { }
         public void OnMove(int sx, int sy, int ex, int ey, Canvas canvas) { }
@@ -356,8 +355,6 @@ namespace DeloP
     }
     public class MoveTool : ITool
     {
-        public int Thickness { get; set; }
-
         public void OnStart(int x, int y, Canvas canvas) { }
         public void OnEnd(int sx, int sy, int ex, int ey, Canvas canvas) { }
         public void OnMove(int sx, int sy, int ex, int ey, Canvas canvas)
