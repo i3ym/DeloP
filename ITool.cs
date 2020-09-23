@@ -13,7 +13,7 @@ namespace DeloP
     public interface ITool
     {
         string SpriteName => GetType().Name[..^4].ToLowerInvariant();
-        float Thickness { get; set; }
+        int Thickness { get; set; }
 
         void OnStart(int x, int y, Canvas canvas);
         void OnEnd(int sx, int sy, int ex, int ey, Canvas canvas);
@@ -29,7 +29,7 @@ namespace DeloP
 
     public class PencilTool : ITool
     {
-        public float Thickness { get; set; } = 1f;
+        public int Thickness { get; set; } = 1;
 
         public void OnStart(int x, int y, Canvas canvas) => DrawLine(x, y, x, y, canvas, canvas.MainColor);
         public void OnEnd(int sx, int sy, int ex, int ey, Canvas canvas) { }
@@ -49,7 +49,7 @@ namespace DeloP
     }
     public class EraserTool : ITool
     {
-        public float Thickness { get; set; } = 1f;
+        public int Thickness { get; set; } = 1;
 
         public void OnStart(int x, int y, Canvas canvas) => DrawLine(x, y, x, y, canvas);
         public void OnEnd(int sx, int sy, int ex, int ey, Canvas canvas) { }
@@ -147,7 +147,7 @@ namespace DeloP
 
     public abstract class ShapeTool : ITool
     {
-        public float Thickness { get; set; } = 1f;
+        public int Thickness { get; set; } = 1;
         int StartX, StartY;
         int OldEndX, OldEndY;
 
@@ -280,7 +280,7 @@ namespace DeloP
 
     public class FillTool : ITool
     {
-        public float Thickness { get; set; }
+        public int Thickness { get; set; }
 
         public void OnStart(int x, int y, Canvas canvas)
         {
@@ -344,7 +344,7 @@ namespace DeloP
     }
     public class PipetteTool : ITool
     {
-        public float Thickness { get; set; }
+        public int Thickness { get; set; }
 
         public void OnStart(int x, int y, Canvas canvas) => canvas.MainColor = canvas.Image[x, y];
         public void OnEnd(int sx, int sy, int ex, int ey, Canvas canvas) { }
@@ -356,7 +356,7 @@ namespace DeloP
     }
     public class MoveTool : ITool
     {
-        public float Thickness { get; set; }
+        public int Thickness { get; set; }
 
         public void OnStart(int x, int y, Canvas canvas) { }
         public void OnEnd(int sx, int sy, int ex, int ey, Canvas canvas) { }
