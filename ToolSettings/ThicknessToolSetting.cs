@@ -32,7 +32,7 @@ namespace DeloP.ToolSettings
         public override bool AppliesTo(ITool tool) => tool is IThicknessTool;
         protected override bool OnInvalidate(Invalidation invalidation, InvalidationSource source)
         {
-            Width = Input.Width;
+            Width = Input.Width + 4;
             return base.OnInvalidate(invalidation, source);
         }
     }
