@@ -108,6 +108,8 @@ namespace DeloP.Containers
                 DragEndEvent(e);
                 base.OnDragEnd(e);
             }
+
+            protected override bool OnMouseDown(MouseDownEvent e) => true;
         }
         public readonly struct ResizeEvent
         {
