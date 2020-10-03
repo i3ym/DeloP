@@ -1,6 +1,7 @@
 using System;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
 using osu.Framework.Layout;
@@ -117,10 +118,15 @@ namespace DeloP.Controls
             return base.OnInvalidate(invalidation, source);
         }
 
-        public (int x, int y) ToImagePosition(int mousex, int mousey) =>
+        public (int x, int y) ToImagePositiona(int mousex, int mousey) =>
             (
                 (int) ((mousex - DrawPosition.X) / Scale.X / Sprite.DrawWidth * Image.Width),
                 (int) ((mousey - DrawPosition.Y) / Scale.Y / Sprite.DrawHeight * Image.Height)
+            );
+        public (int x, int y) ToImageFromScreen(int screenMousex, int screenMousey) =>
+            (
+                (int) ((screenMousex - ScreenSpaceDrawQuad.TopLeft.X) / Scale.X / Sprite.DrawWidth * Image.Width),
+                (int) ((screenMousey - ScreenSpaceDrawQuad.TopLeft.Y) / Scale.Y / Sprite.DrawHeight * Image.Height)
             );
 
         public void UpdateImage() => Sprite.Texture.SetData(TextureImageUpload);
