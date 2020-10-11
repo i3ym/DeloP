@@ -1,10 +1,10 @@
 using System;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
 using osu.Framework.Layout;
+using osuTK;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -18,7 +18,7 @@ namespace DeloP.Controls
         public event Action<Rgba32> OnSetMainColor = delegate { };
         public event Action<Rgba32> OnSetSecondaryColor = delegate { };
         public event Action<Image<Rgba32>> OnImageReplace = delegate { };
-        public event Action OnMove = delegate { };
+        public event Action LayoutInvalidateAction = delegate { };
 
         readonly Sprite Sprite, OverlaySprite;
 
@@ -29,7 +29,7 @@ namespace DeloP.Controls
             private set
             {
                 _Image = value;
-                OverlayImage = new Image<Rgba32>(Configuration.Default, Image.Width, Image.Height, Color.Transparent);
+                OverlayImage = new Image<Rgba32>(SixLabors.ImageSharp.Configuration.Default, Image.Width, Image.Height, Color.Transparent);
 
                 Sprite.Texture = new Texture(Image.Width, Image.Height, true, osuTK.Graphics.ES30.All.Nearest);
                 Sprite.Texture.TextureGL.BypassTextureUploadQueueing = true;
@@ -44,6 +44,17 @@ namespace DeloP.Controls
         }
         public Image<Rgba32> OverlayImage { get; private set; } = null!;
         CachedTextureUpload TextureImageUpload = null!, OverlayTextureUpload = null!;
+
+        float _Zoom = 1;
+        public float Zoom
+        {
+            get => _Zoom;
+            set
+            {
+                _Zoom = value;
+                Size = new Vector2(Image.Width * value, Image.Height * value);
+            }
+        }
 
         Rgba32 _MainColor = Color.Black;
         Rgba32 _SecondaryColor = Color.White;
@@ -95,7 +106,7 @@ namespace DeloP.Controls
                 OverlaySprite
             };
 
-            Image = new Image<Rgba32>(Configuration.Default, 1000, 1000, Color.White);
+            Image = new Image<Rgba32>(SixLabors.ImageSharp.Configuration.Default, 1000, 1000, Color.White);
             UpdateImage();
 
             MainColor = Color.Black;
@@ -105,7 +116,7 @@ namespace DeloP.Controls
         public void ChangeSize(int width, int height) => ChangeSize(0, 0, width, height);
         public void ChangeSize(int dx, int dy, int width, int height)
         {
-            var newimg = new Image<Rgba32>(Configuration.Default, width, height, Rgba32.White);
+            var newimg = new Image<Rgba32>(SixLabors.ImageSharp.Configuration.Default, width, height, Rgba32.White);
             newimg.Mutate(ctx => ctx.DrawImage(Image, new Point(dx, dy), 1f));
             Image = newimg;
 
@@ -114,7 +125,7 @@ namespace DeloP.Controls
 
         protected override bool OnInvalidate(Invalidation invalidation, InvalidationSource source)
         {
-            OnMove();
+            if ((invalidation & Invalidation.Layout) != 0) LayoutInvalidateAction();
             return base.OnInvalidate(invalidation, source);
         }
 

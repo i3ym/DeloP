@@ -21,16 +21,20 @@ namespace DeloP.Controls
                 Canvas.Width = img.Width;
                 Canvas.Height = img.Height;
 
-                CanvasContainer.Width = Canvas.Width * Canvas.Scale.X;
-                CanvasContainer.Height = Canvas.Height * Canvas.Scale.Y;
+                CanvasContainer.Width = Canvas.Width * Canvas.Zoom;
+                CanvasContainer.Height = Canvas.Height * Canvas.Zoom;
             };
             CanvasContainer.OnResize += e =>
             {
-                Canvas.ChangeSize((int) -((e.EndPos.X - e.StartPos.X) / Canvas.Scale.X), (int) -((e.EndPos.Y - e.StartPos.Y) / Canvas.Scale.Y),
-                    (int) (e.EndSize.X / Canvas.Scale.X), (int) (e.EndSize.Y / Canvas.Scale.Y));
+                Canvas.ChangeSize((int) -((e.EndPos.X - e.StartPos.X) / Canvas.Zoom), (int) -((e.EndPos.Y - e.StartPos.Y) / Canvas.Zoom),
+                    (int) (e.EndSize.X / Canvas.Zoom), (int) (e.EndSize.Y / Canvas.Zoom));
                 Canvas.Position = e.EndPos;
             };
-            Canvas.OnMove += () => CanvasContainer.Position = Canvas.DrawPosition;
+            Canvas.LayoutInvalidateAction += () =>
+            {
+                CanvasContainer.Position = Canvas.DrawPosition;
+                CanvasContainer.Size = Canvas.DrawSize;
+            };
         }
 
 

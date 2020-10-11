@@ -10,7 +10,7 @@ namespace DeloP.ToolSettings
         {
             var slider = new HandleSlider();
             slider.Current = new BindableInt() { MinValue = 0, MaxValue = 100 };
-            slider.Current.ValueChanged += e => canvas.Scale = new osuTK.Vector2(e.NewValue / 100f * 10 + 1);
+            slider.Current.ValueChanged += e => canvas.Zoom = e.NewValue / 100f * 10 + 1;
             slider.Current.Value = 0;
 
             slider.RelativeSizeAxes = Axes.Both;

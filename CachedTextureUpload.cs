@@ -23,6 +23,6 @@ namespace DeloP
             Bounds = new RectangleI(0, 0, Image.Width, Image.Height);
         }
 
-        public void Dispose() { }
+        void IDisposable.Dispose() { }
     }
 }
