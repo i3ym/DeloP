@@ -355,8 +355,8 @@ namespace DeloP
         public void OnEnd(int sx, int sy, int ex, int ey, Canvas canvas) { }
         public void OnMove(int sx, int sy, int ex, int ey, Canvas canvas)
         {
-            canvas.X += ex - sx;
-            canvas.Y += ey - sy;
+            canvas.X += (ex - sx) * canvas.Zoom;
+            canvas.Y += (ey - sy) * canvas.Zoom;
         }
     }
 }
