@@ -174,7 +174,8 @@ namespace DeloP
 
         public static void DrawLine(int startX, int startY, int endX, int endY, Image<Rgba32> image, Rgba32 color, float thickness)
         {
-            if (startY == endY) DrawStraightHorizontalLine(startX, endX, startY, image, color, thickness);
+            if (startX == endX && startY == endY) DrawStraightHorizontalLine(startX, endX + 1, startY, image, color, thickness);
+            else if (startY == endY) DrawStraightHorizontalLine(startX, endX, startY, image, color, thickness);
             else if (startX == endX) DrawStraightVerticalLine(startX, startY, endY, image, color, thickness);
             else DrawAngledLine(startX, startY, endX, endY, image, color, thickness);
         }
