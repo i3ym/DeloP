@@ -1,6 +1,7 @@
 using DeloP.Containers;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Input.Events;
+using osuTK;
 using osuTK.Input;
 
 namespace DeloP.Controls
@@ -45,7 +46,10 @@ namespace DeloP.Controls
         public bool MouseDown(MouseDownEvent e)
         {
             if (base.OnMouseDown(e)) return true;
-            if (!Canvas.BoundingBox.Contains(e.MousePosition)) return false;
+
+            var mousepos = Canvas.ToImageFromScreen((int) e.ScreenSpaceMousePosition.X, (int) e.ScreenSpaceMousePosition.Y);
+            if (mousepos.x < 0 || mousepos.y < 0) return false;
+            if (mousepos.x > Canvas.Image.Width || mousepos.y > Canvas.Image.Height) return false;
 
             if (e.Button == MouseButton.Left) DrawType = DrawingType.Left;
             else if (e.Button == MouseButton.Right) DrawType = DrawingType.Right;
