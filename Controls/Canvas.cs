@@ -52,7 +52,7 @@ namespace DeloP.Controls
             set
             {
                 _Zoom = value;
-                Size = new Vector2(Image.Width * value, Image.Height * value);
+                this.ResizeTo(new Vector2(Image.Width * value, Image.Height * value), 100, Easing.OutQuad);
             }
         }
 
