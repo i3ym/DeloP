@@ -1,6 +1,7 @@
 using System;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
 using osu.Framework.Layout;
@@ -113,6 +114,45 @@ namespace DeloP.Controls
             SecondaryColor = Color.White;
         }
 
+
+        int i = 0;
+        protected override void Update()
+        {
+            i++;
+            base.Update();
+
+            if (DoUpdateImage)
+            {
+                DoUpdateImage = false;
+
+                if (ImageUpdateRect.HasValue)
+                {
+                    var b = TextureImageUpload.Bounds;
+                    TextureImageUpload.Bounds = ImageUpdateRect.Value;
+                    Sprite.Texture.SetData(TextureImageUpload);
+
+                    TextureImageUpload.Bounds = b;
+                    ImageUpdateRect = null;
+                }
+                else Sprite.Texture.SetData(TextureImageUpload);
+            }
+            if (DoUpdateOverlay)
+            {
+                DoUpdateOverlay = false;
+
+                if (OverlayUpdateRect.HasValue)
+                {
+                    var b = OverlayTextureUpload.Bounds;
+                    OverlayTextureUpload.Bounds = OverlayUpdateRect.Value;
+                    OverlaySprite.Texture.SetData(TextureImageUpload);
+
+                    OverlayTextureUpload.Bounds = b;
+                    OverlayUpdateRect = null;
+                }
+                else OverlaySprite.Texture.SetData(OverlayTextureUpload);
+            }
+        }
+
         public void ChangeSize(int width, int height) => ChangeSize(0, 0, width, height);
         public void ChangeSize(int dx, int dy, int width, int height)
         {
@@ -129,18 +169,22 @@ namespace DeloP.Controls
             return base.OnInvalidate(invalidation, source);
         }
 
-        public (int x, int y) ToImagePositiona(int mousex, int mousey) =>
-            (
-                (int) ((mousex - DrawPosition.X) / Scale.X / Sprite.DrawWidth * Image.Width),
-                (int) ((mousey - DrawPosition.Y) / Scale.Y / Sprite.DrawHeight * Image.Height)
-            );
         public (int x, int y) ToImageFromScreen(int screenMousex, int screenMousey) =>
             (
                 (int) ((screenMousex - ScreenSpaceDrawQuad.TopLeft.X) / Scale.X / Sprite.DrawWidth * Image.Width),
                 (int) ((screenMousey - ScreenSpaceDrawQuad.TopLeft.Y) / Scale.Y / Sprite.DrawHeight * Image.Height)
             );
 
-        public void UpdateImage() => Sprite.Texture.SetData(TextureImageUpload);
-        public void UpdateOverlay() => OverlaySprite.Texture.SetData(OverlayTextureUpload);
+        bool DoUpdateImage, DoUpdateOverlay;
+        RectangleI? ImageUpdateRect, OverlayUpdateRect;
+
+
+        public void UpdateImage() => DoUpdateImage = true;
+        public void UpdateImage(RectangleI bounds)
+        {
+            DoUpdateImage = true;
+            ImageUpdateRect = bounds;
+        }
+        public void UpdateOverlay() => DoUpdateOverlay = true;
     }
 }

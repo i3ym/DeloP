@@ -1,12 +1,11 @@
-using System.Linq;
 using System.Collections.Concurrent;
 using System;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Advanced;
 using SixLabors.ImageSharp.PixelFormats;
 using System.Collections.Generic;
-using osu.Framework.Graphics;
 using DeloP.Controls;
+using osu.Framework.Graphics.Primitives;
 
 namespace DeloP
 {
@@ -42,7 +41,7 @@ namespace DeloP
         void DrawLine(int sx, int sy, int ex, int ey, Canvas canvas, Rgba32 color)
         {
             ShapeTool.DrawLine(sx, sy, ex, ey, canvas.Image, color, Thickness);
-            canvas.UpdateImage();
+            canvas.UpdateImage(new RectangleI(sx - Thickness, sy - Thickness, ex + Thickness, ey + Thickness));
         }
     }
     public class EraserTool : IThicknessTool
@@ -60,12 +59,12 @@ namespace DeloP
         void DrawLine(int sx, int sy, int ex, int ey, Canvas canvas)
         {
             ShapeTool.DrawLine(sx, sy, ex, ey, canvas.Image, canvas.SecondaryColor, Thickness);
-            canvas.UpdateImage();
+            canvas.UpdateImage(new RectangleI(sx - Thickness, sy - Thickness, ex + Thickness, ey + Thickness));
         }
         void DrawLineReplace(int sx, int sy, int ex, int ey, Canvas canvas)
         {
             DrawLine(sx, sy, ex, ey, canvas.Image, canvas.MainColor, canvas.SecondaryColor, Thickness);
-            canvas.UpdateImage();
+            canvas.UpdateImage(new RectangleI(sx - Thickness, sy - Thickness, ex + Thickness, ey + Thickness));
         }
 
 

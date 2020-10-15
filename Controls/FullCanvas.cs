@@ -1,7 +1,6 @@
 using DeloP.Containers;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Input.Events;
-using osuTK;
 using osuTK.Input;
 
 namespace DeloP.Controls

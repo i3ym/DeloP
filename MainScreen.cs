@@ -1,6 +1,9 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using DeloP.Containers;
 using DeloP.Controls;
+using osu.Framework.Allocation;
+using osu.Framework.Configuration;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Input.Events;
@@ -29,10 +32,10 @@ namespace DeloP
             FullCanvas.Y = ToolSettingsPanel.Height + 2;
             FullCanvas.X = ToolPanel.Width + 2;
         }
-        protected override void LoadComplete()
-        {
-            base.LoadComplete();
 
+        [BackgroundDependencyLoader]
+        void Load()
+        {
             Window.Title = "DeloP";
             Window.WindowStateChanged += (obj, e) => Task.Run(async () => { await Task.Delay(5); Invalidate(); });
 
