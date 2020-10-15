@@ -1,50 +1,36 @@
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using DeloP.Containers;
 using DeloP.Controls;
 using osu.Framework.Allocation;
-using osu.Framework.Configuration;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Input.Events;
+using osu.Framework.IO.Stores;
 
 namespace DeloP
 {
     public class MainScreen : osu.Framework.Game
     {
-        readonly FullCanvas FullCanvas;
-        readonly ToolPanel ToolPanel;
-        readonly ToolSettingsPanel ToolSettingsPanel;
+        const int ToolPanelWidth = 68, ToolSettingsHeight = 32, MenuHeight = 24;
 
-        public MainScreen()
-        {
-            FullCanvas = new FullCanvas();
-
-            ToolSettingsPanel = new ToolSettingsPanel(FullCanvas.Canvas);
-            ToolSettingsPanel.Height = 32;
-            ToolSettingsPanel.RelativeSizeAxes = Axes.X;
-
-            ToolPanel = new ToolPanel(FullCanvas.Canvas);
-            ToolPanel.RelativeSizeAxes = Axes.Y;
-            ToolPanel.Y = ToolSettingsPanel.Height;
-            ToolPanel.Width = 68;
-
-            FullCanvas.Y = ToolSettingsPanel.Height + 2;
-            FullCanvas.X = ToolPanel.Width + 2;
-        }
+        readonly FullCanvas FullCanvas = new FullCanvas() { Y = ToolSettingsHeight + 2, X = ToolPanelWidth + 2 };
 
         [BackgroundDependencyLoader]
         void Load()
         {
+            Resources.AddStore(new DllResourceStore("DeloP.dll"));
+            Fonts.AddStore(new GlyphStore(Resources, "Fonts/Ubuntu"));
+
             Window.Title = "DeloP";
             Window.WindowStateChanged += (obj, e) => Task.Run(async () => { await Task.Delay(5); Invalidate(); });
 
             Children = new Drawable[]
             {
-                new Box() { Colour = Colors.DarkBackground, RelativeSizeAxes = Axes.Both },
+                new Box() { RelativeSizeAxes = Axes.Both, Colour = Colors.DarkBackground },
+                new Menu(FullCanvas.Canvas) { RelativeSizeAxes = Axes.X, Height = MenuHeight, Depth = -2 },
+                new ToolSettingsPanel(FullCanvas.Canvas) { RelativeSizeAxes = Axes.X, Y = MenuHeight, Height = ToolSettingsHeight, Depth = -1 },
+                new ToolPanel(FullCanvas.Canvas) { RelativeSizeAxes = Axes.Y, Y = ToolSettingsHeight + MenuHeight, Width = ToolPanelWidth, Depth = -1 },
                 FullCanvas,
-                ToolPanel,
-                ToolSettingsPanel,
             };
         }
 

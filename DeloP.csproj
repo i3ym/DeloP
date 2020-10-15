@@ -12,7 +12,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="res/**" />
+    <EmbeddedResource Include="Textures/**" />
+    <EmbeddedResource Include="Fonts/**" />
   </ItemGroup>
 
 </Project>

@@ -11,6 +11,7 @@ using osuTK.Input;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
 using DeloP.Controls;
+using osu.Framework.Allocation;
 
 namespace DeloP.Containers
 {
@@ -84,43 +85,36 @@ namespace DeloP.Containers
 
             class ToolDrawable : SpriteBox
             {
+                [Resolved] TextureStore TextureStore { get; set; } = null!;
+
                 readonly Canvas Canvas;
                 public readonly ITool Tool;
                 bool IsSelected = false;
 
-                public ToolDrawable(Canvas canvas, ITool tool) : base(LoadTexture(tool))
+                public ToolDrawable(Canvas canvas, ITool tool)
                 {
                     Canvas = canvas;
                     Tool = tool;
+                }
 
-                    BackgroundBox.Texture = Textures.SelectedTool.Value;
-                    BackgroundBox.Colour = Colors.ToolSelection;
-                    DarkBorderBox.Alpha = BackgroundBox.Alpha = 0;
-
+                [BackgroundDependencyLoader]
+                void Load()
+                {
                     OutBorder = 1;
                     InBorder = 5;
                     Sprite.Width = Sprite.Height = 16;
 
-                    canvas.OnSetTool += t =>
+                    BackgroundBox.Texture = TextureStore.Get("tool_selected");
+                    BackgroundBox.Colour = Colors.ToolSelection;
+                    DarkBorderBox.Alpha = BackgroundBox.Alpha = 0;
+
+                    Sprite.Texture = TextureStore.Get(Tool.SpriteName);
+
+                    Canvas.OnSetTool += t =>
                     {
                         IsSelected = t == Tool;
                         DarkBorderBox.Alpha = BackgroundBox.Alpha = IsSelected ? 1 : 0;
                     };
-                }
-
-                static Texture LoadTexture(ITool tool)
-                {
-                    try
-                    {
-                        var img = SpriteStore.Load("res.sprites." + tool.SpriteName + ".png");
-                        var texture = new Texture(img.Width, img.Height, true, osuTK.Graphics.ES30.All.Nearest);
-                        texture.SetData(new TextureUpload(img));
-
-                        return texture;
-                    }
-                    catch { Console.WriteLine("Warning: res.sprites." + tool.SpriteName + ".png was not found"); }
-
-                    return Texture.WhitePixel;
                 }
 
                 protected override bool OnHover(HoverEvent e)
@@ -292,14 +286,15 @@ namespace DeloP.Containers
             protected readonly Sprite Sprite, DarkBorderBox, BackgroundBox;
             protected int InBorder = 1, OutBorder = 1;
 
-            public SpriteBox(Texture texture)
+            public SpriteBox()
             {
                 AddInternal(BackgroundBox = new Sprite() { Texture = Texture.WhitePixel, Colour = Colors.Background, RelativeSizeAxes = Axes.Both });
                 AddInternal(DarkBorderBox = new Sprite() { Texture = Texture.WhitePixel, Colour = Colors.DarkBackground });
-                AddInternal(Sprite = new Sprite() { Texture = texture });
+                AddInternal(Sprite = new Sprite());
 
                 BackgroundBox.X = BackgroundBox.Y = 0;
             }
+            public SpriteBox(Texture texture) : this() => Sprite.Texture = texture;
 
             protected override bool OnInvalidate(Invalidation invalidation, InvalidationSource source)
             {

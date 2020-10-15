@@ -1,10 +1,13 @@
 using System;
+using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
 using osu.Framework.Graphics.UserInterface;
 using osu.Framework.Layout;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 
 namespace DeloP.Controls
@@ -12,6 +15,8 @@ namespace DeloP.Controls
     public class NumericUpDown : CompositeDrawable
     {
         public event Action<int> OnChangeValue = delegate { };
+
+        [Resolved] TextureStore TextureStore { get; set; } = null!;
 
         int _Value;
         public int Value
@@ -42,7 +47,9 @@ namespace DeloP.Controls
 
 
             var upTex = new Sprite();
-            var upimg = SpriteStore.Load("res.sprites.hide_show.png");
+            var upimg = Image.Load<Rgba32>(GetType().Assembly.GetManifestResourceStream("DeloP.Textures.hide_show.png")!);
+            var downimg = upimg.Clone();
+
             upimg.Mutate(ctx => ctx.Rotate(RotateMode.Rotate270));
 
             upTex.Texture = new Texture(upimg.Width, upimg.Height, true, osuTK.Graphics.ES30.All.Nearest);
@@ -50,7 +57,6 @@ namespace DeloP.Controls
             Up.Child = upTex;
 
             var downTex = new Sprite();
-            var downimg = SpriteStore.Load("res.sprites.hide_show.png");
             downimg.Mutate(ctx => ctx.Rotate(RotateMode.Rotate90));
 
             downTex.Texture = new Texture(downimg.Width, downimg.Height, true, osuTK.Graphics.ES30.All.Nearest);
