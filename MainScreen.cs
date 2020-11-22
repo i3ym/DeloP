@@ -27,8 +27,6 @@ namespace DeloP
             Fonts.AddStore(new GlyphStore(Resources, "Fonts/Ubuntu"));
 
             Window.Title = "DeloP";
-            Window.WindowStateChanged += (obj, e) => Task.Run(async () => { await Task.Delay(5); Invalidate(); });
-
             Children = new Drawable[]
             {
                 new Box() { RelativeSizeAxes = Axes.Both, Colour = Colors.DarkBackground },

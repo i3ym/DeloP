@@ -339,7 +339,7 @@ namespace DeloP.Containers
                     foreach (var child in content)
                         child.X = child.Y = DrawWidth / 2 / 2 - child.Width / 2 - (int) Padding.Left / 2;
 
-                Height = Grid.Content.Length * DrawWidth / 2;
+                Height = Grid.Content.Count * DrawWidth / 2;
                 return base.OnInvalidate(invalidation, source);
             }
         }
