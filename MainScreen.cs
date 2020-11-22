@@ -1,4 +1,6 @@
+using System.Threading.Tasks.Dataflow;
 using System.Threading.Tasks;
+using System.IO;
 using DeloP.Containers;
 using DeloP.Controls;
 using osu.Framework;
@@ -10,6 +12,7 @@ using osu.Framework.Input.Events;
 using osu.Framework.IO.Stores;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Advanced;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace DeloP
 {
@@ -39,11 +42,53 @@ namespace DeloP
 
         MenuItem[] CreateMenuItems()
         {
+            string? openedPath = null;
+
+            static void save(Image<Rgba32> image, string file)
+            {
+                using var stream = File.OpenWrite(file);
+                image.SaveAsPng(stream);
+            }
             void clickNew()
             {
                 FullCanvas.Canvas.Image.GetPixelSpan().Fill(Color.White);
                 FullCanvas.Canvas.UpdateImage();
             }
+            void clickOpen()
+            {
+                var selector = new BackgroundDrawable<DeloFileSelector>(new DeloFileSelector()) { RelativeSizeAxes = Axes.Both, Depth = -99, Background = Colors.Background };
+                selector.Child.CurrentFile.ValueChanged += e => Task.Run(() =>
+                {
+                    try
+                    {
+                        FullCanvas.Canvas.Image = Image.Load<Rgba32>(e.NewValue.FullName);
+                        FullCanvas.Canvas.UpdateImage();
+                        openedPath = e.NewValue.FullName;
+
+                        Schedule(() => Remove(selector));
+                    }
+                    catch { }
+                });
+
+                Schedule(() => Add(selector));
+            }
+            void clickSave() => Task.Run(() =>
+            {
+                if (openedPath is null) clickSaveAs();
+                else save(FullCanvas.Canvas.Image, openedPath);
+            });
+            void clickSaveAs()
+            {
+                var selector = new BackgroundDrawable<DeloFileSaveSelector>(new DeloFileSaveSelector()) { RelativeSizeAxes = Axes.Both, Depth = -99, Background = Colors.Background };
+                selector.Child.OnSelect += p => Task.Run(() =>
+                {
+                    save(FullCanvas.Canvas.Image, openedPath = p);
+                    Schedule(() => Remove(selector));
+                });
+
+                Schedule(() => Add(selector));
+            }
+            void clickExit() => Game.Exit();
 
 
             return new[]
@@ -53,8 +98,10 @@ namespace DeloP
                     Items = new[]
                     {
                         new MenuItem("Новый", clickNew),
-                        new MenuItem("Коровый", () => System.Console.WriteLine("чё смотриш пёс")),
-                        new MenuItem("Выйти", Game.Exit),
+                        new MenuItem("Открыть", clickOpen),
+                        new MenuItem("Сохранить", clickSave),
+                        new MenuItem("Сохранить как...", clickSaveAs),
+                        new MenuItem("Выйти", clickExit),
                     }
                 },
                 new MenuItem("Нефайл", () => { })

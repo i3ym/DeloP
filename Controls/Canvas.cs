@@ -27,7 +27,7 @@ namespace DeloP.Controls
         public Image<Rgba32> Image
         {
             get => _Image;
-            private set
+            set
             {
                 _Image = value;
                 OverlayImage = new Image<Rgba32>(SixLabors.ImageSharp.Configuration.Default, Image.Width, Image.Height, Color.Transparent);
@@ -40,6 +40,7 @@ namespace DeloP.Controls
                 TextureImageUpload = new CachedTextureUpload(Image);
                 OverlayTextureUpload = new CachedTextureUpload(OverlayImage);
 
+                UpdateImage();
                 OnImageReplace(value);
             }
         }
