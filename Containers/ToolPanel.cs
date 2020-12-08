@@ -1,17 +1,16 @@
 using System.Collections.Generic;
-using System;
 using System.Linq;
+using DeloP.Controls;
+using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
-using osu.Framework.Input.Events;
-using osu.Framework.Layout;
-using SixLabors.ImageSharp.PixelFormats;
-using osuTK.Input;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
-using DeloP.Controls;
-using osu.Framework.Allocation;
+using osu.Framework.Input.Events;
+using osu.Framework.Layout;
+using osuTK.Input;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace DeloP.Containers
 {
@@ -22,12 +21,12 @@ namespace DeloP.Containers
         readonly ToolsContainer CTools;
         readonly ColorsContainer CColors;
 
-        public ToolPanel(Canvas canvas)
+        public ToolPanel(Canvas canvas, IEnumerable<ITool> tools)
         {
             Canvas = canvas;
 
             Container = new Container();
-            CTools = new ToolsContainer(Canvas) { RelativeSizeAxes = Axes.X };
+            CTools = new ToolsContainer(Canvas, tools) { RelativeSizeAxes = Axes.X };
             CColors = new ColorsContainer(Canvas) { RelativeSizeAxes = Axes.X };
         }
         protected override void LoadComplete()
@@ -55,25 +54,11 @@ namespace DeloP.Containers
 
         class ToolsContainer : CompositeDrawable
         {
-            public ToolsContainer(Canvas canvas)
+            public ToolsContainer(Canvas canvas, IEnumerable<ITool> tools)
             {
-                var tools = Enumerable.Empty<ITool>()
-                    .Append(new MoveTool())
-                    .Append(new PencilTool())
-                    .Append(new EraserTool())
-                    .Append(new PipetteTool())
-                    .Append(new LineTool())
-                    .Append(new RectangleTool())
-                    .Append(new TriangleTool())
-                    .Append(new FillTool())
-                    .Select(x => new ToolDrawable(canvas, x));
-
-
-                var grid = new CubeGrid(canvas, tools);
+                var grid = new CubeGrid(canvas, tools.Select(x => new ToolDrawable(canvas, x)));
                 grid.RelativeSizeAxes = Axes.X;
                 InternalChild = grid;
-
-                canvas.CurrentTool = tools.First().Tool;
             }
 
             protected override bool OnInvalidate(Invalidation invalidation, InvalidationSource source)
@@ -110,9 +95,9 @@ namespace DeloP.Containers
 
                     Sprite.Texture = TextureStore.Get(Tool.SpriteName);
 
-                    Canvas.OnSetTool += t =>
+                    Canvas.CurrentTool.ValueChanged += e =>
                     {
-                        IsSelected = t == Tool;
+                        IsSelected = e.NewValue == Tool;
                         DarkBorderBox.Alpha = BackgroundBox.Alpha = IsSelected ? 1 : 0;
                     };
                 }
@@ -129,7 +114,7 @@ namespace DeloP.Containers
                 }
                 protected override bool OnClick(ClickEvent e)
                 {
-                    Canvas.CurrentTool = Tool;
+                    Canvas.CurrentTool.Value = Tool;
                     return base.OnClick(e);
                 }
             }

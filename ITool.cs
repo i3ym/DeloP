@@ -1,11 +1,11 @@
-using System.Collections.Concurrent;
 using System;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Advanced;
-using SixLabors.ImageSharp.PixelFormats;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using DeloP.Controls;
 using osu.Framework.Graphics.Primitives;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Advanced;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace DeloP
 {
@@ -13,58 +13,72 @@ namespace DeloP
     {
         string SpriteName => GetType().Name[..^4].ToLowerInvariant();
 
-        void OnStart(int x, int y, Canvas canvas);
-        void OnEnd(int sx, int sy, int ex, int ey, Canvas canvas);
-        void OnMove(int sx, int sy, int ex, int ey, Canvas canvas);
+        void OnStart(int x, int y);
+        void OnEnd(int sx, int sy, int ex, int ey);
+        void OnMove(int sx, int sy, int ex, int ey);
 
-        void OnStartRight(int x, int y, Canvas canvas) { }
-        void OnEndRight(int sx, int sy, int ex, int ey, Canvas canvas) { }
-        void OnMoveRight(int sx, int sy, int ex, int ey, Canvas canvas) { }
+        void OnStartRight(int x, int y) { }
+        void OnEndRight(int sx, int sy, int ex, int ey) { }
+        void OnMoveRight(int sx, int sy, int ex, int ey) { }
     }
     public interface IThicknessTool : ITool
     {
         int Thickness { get; set; }
     }
 
-    public class PencilTool : IThicknessTool
+    public abstract class Tool
+    {
+        protected Canvas Canvas => FullCanvas.Canvas;
+        protected readonly FullCanvas FullCanvas;
+
+        protected Tool(FullCanvas fullCanvas) => FullCanvas = fullCanvas;
+    }
+    public abstract class ThicknessTool : Tool
     {
         public int Thickness { get; set; } = 1;
 
-        public void OnStart(int x, int y, Canvas canvas) => DrawLine(x, y, x, y, canvas, canvas.MainColor);
-        public void OnEnd(int sx, int sy, int ex, int ey, Canvas canvas) { }
-        public void OnMove(int sx, int sy, int ex, int ey, Canvas canvas) => DrawLine(sx, sy, ex, ey, canvas, canvas.MainColor);
+        protected ThicknessTool(FullCanvas fullCanvas) : base(fullCanvas) { }
+    }
 
-        public void OnStartRight(int x, int y, Canvas canvas) => DrawLine(x, y, x, y, canvas, canvas.SecondaryColor);
-        public void OnEndRight(int sx, int sy, int ex, int ey, Canvas canvas) { }
-        public void OnMoveRight(int sx, int sy, int ex, int ey, Canvas canvas) => DrawLine(sx, sy, ex, ey, canvas, canvas.SecondaryColor);
+    public class PencilTool : ThicknessTool, IThicknessTool
+    {
+        public PencilTool(FullCanvas fullCanvas) : base(fullCanvas) { }
 
-        void DrawLine(int sx, int sy, int ex, int ey, Canvas canvas, Rgba32 color)
+        public void OnStart(int x, int y) => DrawLine(x, y, x, y, Canvas, Canvas.MainColor);
+        public void OnEnd(int sx, int sy, int ex, int ey) { }
+        public void OnMove(int sx, int sy, int ex, int ey) => DrawLine(sx, sy, ex, ey, Canvas, Canvas.MainColor);
+
+        public void OnStartRight(int x, int y) => DrawLine(x, y, x, y, Canvas, Canvas.SecondaryColor);
+        public void OnEndRight(int sx, int sy, int ex, int ey) { }
+        public void OnMoveRight(int sx, int sy, int ex, int ey) => DrawLine(sx, sy, ex, ey, Canvas, Canvas.SecondaryColor);
+
+        void DrawLine(int sx, int sy, int ex, int ey, Canvas Canvas, Rgba32 color)
         {
-            ShapeTool.DrawLine(sx, sy, ex, ey, canvas.Image, color, Thickness);
-            canvas.UpdateImage(new RectangleI(sx - Thickness, sy - Thickness, ex + Thickness, ey + Thickness));
+            ShapeTool.DrawLine(sx, sy, ex, ey, Canvas.Image, color, Thickness);
+            Canvas.UpdateImage(new RectangleI(sx - Thickness, sy - Thickness, ex + Thickness, ey + Thickness));
         }
     }
-    public class EraserTool : IThicknessTool
+    public class EraserTool : ThicknessTool, IThicknessTool
     {
-        public int Thickness { get; set; } = 1;
+        public EraserTool(FullCanvas fullCanvas) : base(fullCanvas) { }
 
-        public void OnStart(int x, int y, Canvas canvas) => DrawLine(x, y, x, y, canvas);
-        public void OnEnd(int sx, int sy, int ex, int ey, Canvas canvas) { }
-        public void OnMove(int sx, int sy, int ex, int ey, Canvas canvas) => DrawLine(sx, sy, ex, ey, canvas);
+        public void OnStart(int x, int y) => DrawLine(x, y, x, y, Canvas);
+        public void OnEnd(int sx, int sy, int ex, int ey) { }
+        public void OnMove(int sx, int sy, int ex, int ey) => DrawLine(sx, sy, ex, ey, Canvas);
 
-        public void OnStartRight(int x, int y, Canvas canvas) => DrawLineReplace(x, y, x, y, canvas);
-        public void OnEndRight(int sx, int sy, int ex, int ey, Canvas canvas) { }
-        public void OnMoveRight(int sx, int sy, int ex, int ey, Canvas canvas) => DrawLineReplace(sx, sy, ex, ey, canvas);
+        public void OnStartRight(int x, int y) => DrawLineReplace(x, y, x, y, Canvas);
+        public void OnEndRight(int sx, int sy, int ex, int ey) { }
+        public void OnMoveRight(int sx, int sy, int ex, int ey) => DrawLineReplace(sx, sy, ex, ey, Canvas);
 
-        void DrawLine(int sx, int sy, int ex, int ey, Canvas canvas)
+        void DrawLine(int sx, int sy, int ex, int ey, Canvas Canvas)
         {
-            ShapeTool.DrawLine(sx, sy, ex, ey, canvas.Image, canvas.SecondaryColor, Thickness);
-            canvas.UpdateImage(new RectangleI(sx - Thickness, sy - Thickness, ex + Thickness, ey + Thickness));
+            ShapeTool.DrawLine(sx, sy, ex, ey, Canvas.Image, Canvas.SecondaryColor, Thickness);
+            Canvas.UpdateImage(new RectangleI(sx - Thickness, sy - Thickness, ex + Thickness, ey + Thickness));
         }
-        void DrawLineReplace(int sx, int sy, int ex, int ey, Canvas canvas)
+        void DrawLineReplace(int sx, int sy, int ex, int ey, Canvas Canvas)
         {
-            DrawLine(sx, sy, ex, ey, canvas.Image, canvas.MainColor, canvas.SecondaryColor, Thickness);
-            canvas.UpdateImage(new RectangleI(sx - Thickness, sy - Thickness, ex + Thickness, ey + Thickness));
+            DrawLine(sx, sy, ex, ey, Canvas.Image, Canvas.MainColor, Canvas.SecondaryColor, Thickness);
+            Canvas.UpdateImage(new RectangleI(sx - Thickness, sy - Thickness, ex + Thickness, ey + Thickness));
         }
 
 
@@ -142,28 +156,30 @@ namespace DeloP
         }
     }
 
-    public abstract class ShapeTool : IThicknessTool
+    public abstract class ShapeTool : Tool, IThicknessTool
     {
         public int Thickness { get; set; } = 1;
         int StartX, StartY;
         int OldEndX, OldEndY;
 
-        public void OnStart(int x, int y, Canvas canvas) => (StartX, StartY) = (x, y);
-        public void OnEnd(int sx, int sy, int ex, int ey, Canvas canvas)
+        public ShapeTool(FullCanvas fullCanvas) : base(fullCanvas) { }
+
+        public void OnStart(int x, int y) => (StartX, StartY) = (x, y);
+        public void OnEnd(int sx, int sy, int ex, int ey)
         {
-            Draw(StartX, StartY, OldEndX, OldEndY, canvas.OverlayImage, Color.Transparent);
-            Draw(StartX, StartY, ex, ey, canvas.Image, canvas.MainColor);
-            canvas.UpdateOverlay();
-            canvas.UpdateImage();
+            Draw(StartX, StartY, OldEndX, OldEndY, Canvas.OverlayImage, Color.Transparent);
+            Draw(StartX, StartY, ex, ey, Canvas.Image, Canvas.MainColor);
+            Canvas.UpdateOverlay();
+            Canvas.UpdateImage();
         }
 
-        public void OnMove(int sx, int sy, int ex, int ey, Canvas canvas)
+        public void OnMove(int sx, int sy, int ex, int ey)
         {
-            Draw(StartX, StartY, OldEndX, OldEndY, canvas.OverlayImage, Color.Transparent);
-            Draw(StartX, StartY, ex, ey, canvas.OverlayImage, canvas.MainColor);
+            Draw(StartX, StartY, OldEndX, OldEndY, Canvas.OverlayImage, Color.Transparent);
+            Draw(StartX, StartY, ex, ey, Canvas.OverlayImage, Canvas.MainColor);
 
             (OldEndX, OldEndY) = (ex, ey);
-            canvas.UpdateOverlay();
+            Canvas.UpdateOverlay();
         }
 
         protected virtual void Draw(int startX, int startY, int endX, int endY, Image<Rgba32> image, Rgba32 color) =>
@@ -240,6 +256,8 @@ namespace DeloP
     }
     public abstract class PolygonShapeTool : ShapeTool
     {
+        public PolygonShapeTool(FullCanvas fullCanvas) : base(fullCanvas) { }
+
         protected override void Draw(int startX, int startY, int endX, int endY, Image<Rgba32> image, Rgba32 color)
         {
             (startX, endX) = (Math.Max(Math.Min(startX, endX), 0), Math.Min(Math.Max(startX, endX), image.Width));
@@ -250,6 +268,8 @@ namespace DeloP
     }
     public class RectangleTool : PolygonShapeTool
     {
+        public RectangleTool(FullCanvas fullCanvas) : base(fullCanvas) { }
+
         protected override void DrawOverride(int startX, int startY, int endX, int endY, Image<Rgba32> image, Rgba32 color)
         {
             var ct = new Constrained(image);
@@ -263,6 +283,8 @@ namespace DeloP
     }
     public class TriangleTool : PolygonShapeTool
     {
+        public TriangleTool(FullCanvas fullCanvas) : base(fullCanvas) { }
+
         protected override void DrawOverride(int startX, int startY, int endX, int endY, Image<Rgba32> image, Rgba32 color)
         {
             DrawLine(startX, endY, (endX - startX) / 2 + startX, startY, image, color, Thickness);
@@ -272,22 +294,26 @@ namespace DeloP
     }
     public class LineTool : ShapeTool
     {
+        public LineTool(FullCanvas fullCanvas) : base(fullCanvas) { }
+
         protected override void DrawOverride(int startX, int startY, int endX, int endY, Image<Rgba32> image, Rgba32 color) =>
             DrawLine(startX, startY, endX, endY, image, color, Thickness);
     }
 
-    public class FillTool : ITool
+    public class FillTool : Tool, ITool
     {
-        public void OnStart(int x, int y, Canvas canvas)
+        public FillTool(FullCanvas fullCanvas) : base(fullCanvas) { }
+
+        public void OnStart(int x, int y)
         {
-            Fill(x, y, canvas.Image, canvas.MainColor);
-            canvas.UpdateImage();
+            Fill(x, y, Canvas.Image, Canvas.MainColor);
+            Canvas.UpdateImage();
         }
-        public void OnEnd(int sx, int sy, int ex, int ey, Canvas canvas) { }
-        public void OnMove(int sx, int sy, int ex, int ey, Canvas canvas)
+        public void OnEnd(int sx, int sy, int ex, int ey) { }
+        public void OnMove(int sx, int sy, int ex, int ey)
         {
-            Fill(ex, ey, canvas.Image, canvas.MainColor);
-            canvas.UpdateImage();
+            Fill(ex, ey, Canvas.Image, Canvas.MainColor);
+            Canvas.UpdateImage();
         }
 
 
@@ -338,24 +364,28 @@ namespace DeloP
             }
         }
     }
-    public class PipetteTool : ITool
+    public class PipetteTool : Tool, ITool
     {
-        public void OnStart(int x, int y, Canvas canvas) => canvas.MainColor = canvas.Image[x, y];
-        public void OnEnd(int sx, int sy, int ex, int ey, Canvas canvas) { }
-        public void OnMove(int sx, int sy, int ex, int ey, Canvas canvas) { }
+        public PipetteTool(FullCanvas fullCanvas) : base(fullCanvas) { }
 
-        public void OnStartRight(int x, int y, Canvas canvas) => canvas.SecondaryColor = canvas.Image[x, y];
-        public void OnEndRight(int sx, int sy, int ex, int ey, Canvas canvas) { }
-        public void OnMoveRight(int sx, int sy, int ex, int ey, Canvas canvas) { }
+        public void OnStart(int x, int y) => Canvas.MainColor = Canvas.Image[x, y];
+        public void OnEnd(int sx, int sy, int ex, int ey) { }
+        public void OnMove(int sx, int sy, int ex, int ey) { }
+
+        public void OnStartRight(int x, int y) => Canvas.SecondaryColor = Canvas.Image[x, y];
+        public void OnEndRight(int sx, int sy, int ex, int ey) { }
+        public void OnMoveRight(int sx, int sy, int ex, int ey) { }
     }
-    public class MoveTool : ITool
+    public class MoveTool : Tool, ITool
     {
-        public void OnStart(int x, int y, Canvas canvas) { }
-        public void OnEnd(int sx, int sy, int ex, int ey, Canvas canvas) { }
-        public void OnMove(int sx, int sy, int ex, int ey, Canvas canvas)
+        public MoveTool(FullCanvas fullCanvas) : base(fullCanvas) { }
+
+        public void OnStart(int x, int y) { }
+        public void OnEnd(int sx, int sy, int ex, int ey) { }
+        public void OnMove(int sx, int sy, int ex, int ey)
         {
-            canvas.X += (ex - sx) * canvas.Zoom;
-            canvas.Y += (ey - sy) * canvas.Zoom;
+            Canvas.X += (ex - sx) * FullCanvas.Zoom.Value;
+            Canvas.Y += (ey - sy) * FullCanvas.Zoom.Value;
         }
     }
 }

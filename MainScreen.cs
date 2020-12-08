@@ -1,6 +1,7 @@
-using System.Threading.Tasks.Dataflow;
-using System.Threading.Tasks;
+using System.Collections.Immutable;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using DeloP.Containers;
 using DeloP.Controls;
 using osu.Framework;
@@ -21,7 +22,7 @@ namespace DeloP
         const int ToolPanelWidth = 68, ToolSettingsHeight = 32, MenuHeight = 24;
 
         [Resolved] Game Game { get; set; } = null!;
-        readonly FullCanvas FullCanvas = new FullCanvas() { Y = ToolSettingsHeight + 2, X = ToolPanelWidth + 2 };
+        readonly FullCanvas FullCanvas = new FullCanvas() { RelativeSizeAxes = Axes.Both, Y = ToolSettingsHeight + 2, X = ToolPanelWidth + 2 };
 
         [BackgroundDependencyLoader]
         void Load()
@@ -29,13 +30,26 @@ namespace DeloP
             Resources.AddStore(new DllResourceStore("DeloP.dll"));
             Fonts.AddStore(new GlyphStore(Resources, "Fonts/Ubuntu"));
 
+            var tools = Enumerable.Empty<ITool>()
+                .Append(new MoveTool(FullCanvas))
+                .Append(new PencilTool(FullCanvas))
+                .Append(new EraserTool(FullCanvas))
+                .Append(new PipetteTool(FullCanvas))
+                .Append(new LineTool(FullCanvas))
+                .Append(new RectangleTool(FullCanvas))
+                .Append(new TriangleTool(FullCanvas))
+                .Append(new FillTool(FullCanvas))
+                .ToImmutableArray();
+
+            FullCanvas.Canvas.CurrentTool.Value = tools.First();
+
             Window.Title = "DeloP";
             Children = new Drawable[]
             {
                 new Box() { RelativeSizeAxes = Axes.Both, Colour = Colors.DarkBackground },
                 new DeloMenu(Direction.Horizontal, true) { RelativeSizeAxes = Axes.X, Height = MenuHeight, Depth = -2, Items = CreateMenuItems() },
-                new ToolSettingsPanel(FullCanvas.Canvas) { RelativeSizeAxes = Axes.X, Y = MenuHeight, Height = ToolSettingsHeight, Depth = -1 },
-                new ToolPanel(FullCanvas.Canvas) { RelativeSizeAxes = Axes.Y, Y = ToolSettingsHeight + MenuHeight, Width = ToolPanelWidth, Depth = -1 },
+                new ToolSettingsPanel(FullCanvas) { RelativeSizeAxes = Axes.X, Y = MenuHeight, Height = ToolSettingsHeight, Depth = -1 },
+                new ToolPanel(FullCanvas.Canvas, tools) { RelativeSizeAxes = Axes.Y, Y = ToolSettingsHeight + MenuHeight, Width = ToolPanelWidth, Depth = -1 },
                 FullCanvas,
             };
         }

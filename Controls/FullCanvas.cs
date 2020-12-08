@@ -1,40 +1,58 @@
+using System;
 using DeloP.Containers;
+using osu.Framework.Bindables;
+using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Input.Events;
+using osuTK;
 using osuTK.Input;
 
 namespace DeloP.Controls
 {
     public class FullCanvas : CompositeDrawable
     {
+        public readonly IBindable<float> Zoom = new BindableFloat(1);
+
         public readonly Canvas Canvas;
-        readonly ResizableContainer CanvasContainer;
+        readonly ResizableContainer CanvasResizer;
 
         public FullCanvas()
         {
-            AddInternal(Canvas = new Canvas());
-            AddInternal(CanvasContainer = new ResizableContainer());
+            AddInternal(Canvas = new Canvas() { });
+            AddInternal(CanvasResizer = new ResizableContainer() { Anchor = Canvas.Anchor, Origin = Canvas.Origin });
 
 
-            Canvas.OnImageReplace += img =>
+            Canvas.ScrollEvent += e =>
             {
-                Canvas.Width = img.Width;
-                Canvas.Height = img.Height;
-
-                CanvasContainer.Width = Canvas.Width * Canvas.Zoom;
-                CanvasContainer.Height = Canvas.Height * Canvas.Zoom;
+                if (!e.ControlPressed) return;
+                SetZoom(Zoom.Value + e.ScrollDelta.Y / 100f * 2, e.MousePosition);
             };
-            CanvasContainer.OnResize += e =>
+            Canvas.OnImageReplace += img => Canvas.Size = new Vector2(img.Width, img.Height);
+            CanvasResizer.OnResize += e =>
             {
-                Canvas.ChangeSize((int) -((e.EndPos.X - e.StartPos.X) / Canvas.Zoom), (int) -((e.EndPos.Y - e.StartPos.Y) / Canvas.Zoom),
-                    (int) (e.EndSize.X / Canvas.Zoom), (int) (e.EndSize.Y / Canvas.Zoom));
                 Canvas.Position = e.EndPos;
+                Canvas.ChangeSize((int) -((e.EndPos.X - e.StartPos.X) / Zoom.Value), (int) -((e.EndPos.Y - e.StartPos.Y) / Zoom.Value),
+                    (int) (e.EndSize.X / Zoom.Value), (int) (e.EndSize.Y / Zoom.Value));
             };
-            Canvas.LayoutInvalidateAction += () =>
+            Canvas.LayoutInvalidateEvent += () =>
             {
-                CanvasContainer.Position = Canvas.DrawPosition;
-                CanvasContainer.Size = Canvas.DrawSize;
+                CanvasResizer.Position = Canvas.DrawPosition;
+                CanvasResizer.Size = Canvas.DrawSize;
             };
+        }
+
+        public void SetZoom(float value) => SetZoom(value, new Vector2(Canvas.Width / 2, Canvas.Height / 2));
+        public void SetZoom(float value, Vector2 mousePos)
+        {
+            value = Math.Max(value, .1f);
+            mousePos = new Vector2(mousePos.X / Canvas.Width * Canvas.Image.Width, mousePos.Y / Canvas.Height * Canvas.Image.Height);
+
+            var offset = (value - Zoom.Value) * mousePos;
+            ((Bindable<float>) Zoom).Value = value;
+
+            Canvas.FinishTransforms();
+            Canvas.ResizeTo(new Vector2(Canvas.Image.Width * value, Canvas.Image.Height * value), 100, Easing.OutQuad);
+            Canvas.MoveTo(Canvas.Position - offset, 100, Easing.OutQuad);
         }
 
 
@@ -58,8 +76,8 @@ namespace DeloP.Controls
             (LastMouseX, LastMouseY) = ((int) e.ScreenSpaceMouseDownPosition.X, (int) e.ScreenSpaceMouseDownPosition.Y);
 
             var (x, y) = Canvas.ToImageFromScreen((int) e.ScreenSpaceMouseDownPosition.X, (int) e.ScreenSpaceMouseDownPosition.Y);
-            if (e.Button == MouseButton.Left) Canvas.CurrentTool.OnStart(x, y, Canvas);
-            else if (e.Button == MouseButton.Right) Canvas.CurrentTool.OnStartRight(x, y, Canvas);
+            if (e.Button == MouseButton.Left) Canvas.CurrentTool.Value.OnStart(x, y);
+            else if (e.Button == MouseButton.Right) Canvas.CurrentTool.Value.OnStartRight(x, y);
 
             return false;
         }
@@ -73,8 +91,8 @@ namespace DeloP.Controls
             var (sx, sy) = Canvas.ToImageFromScreen((int) e.ScreenSpaceMouseDownPosition.X, (int) e.ScreenSpaceMouseDownPosition.Y);
             var (ex, ey) = Canvas.ToImageFromScreen((int) e.ScreenSpaceMousePosition.X, (int) e.ScreenSpaceMousePosition.Y);
 
-            if (e.Button == MouseButton.Left) Canvas.CurrentTool.OnEnd(sx, sy, ex, ey, Canvas);
-            else if (e.Button == MouseButton.Right) Canvas.CurrentTool.OnEndRight(sx, sy, ex, ey, Canvas);
+            if (e.Button == MouseButton.Left) Canvas.CurrentTool.Value.OnEnd(sx, sy, ex, ey);
+            else if (e.Button == MouseButton.Right) Canvas.CurrentTool.Value.OnEndRight(sx, sy, ex, ey);
         }
         public bool MouseMove(MouseMoveEvent e)
         {
@@ -86,8 +104,8 @@ namespace DeloP.Controls
 
             (LastMouseX, LastMouseY) = ((int) e.ScreenSpaceMousePosition.X, (int) e.ScreenSpaceMousePosition.Y);
 
-            if (DrawType == DrawingType.Left) Canvas.CurrentTool.OnMove(x, y, tx, ty, Canvas);
-            else if (DrawType == DrawingType.Right) Canvas.CurrentTool.OnMoveRight(x, y, tx, ty, Canvas);
+            if (DrawType == DrawingType.Left) Canvas.CurrentTool.Value.OnMove(x, y, tx, ty);
+            else if (DrawType == DrawingType.Right) Canvas.CurrentTool.Value.OnMoveRight(x, y, tx, ty);
 
             return false;
         }

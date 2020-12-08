@@ -1,9 +1,12 @@
 using System;
+using osu.Framework.Allocation;
+using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
+using osu.Framework.Input.Events;
 using osu.Framework.Layout;
 using osuTK;
 using SixLabors.ImageSharp;
@@ -15,13 +18,16 @@ namespace DeloP.Controls
 {
     public class Canvas : CompositeDrawable
     {
-        public event Action<ITool> OnSetTool = delegate { };
         public event Action<Rgba32> OnSetMainColor = delegate { };
         public event Action<Rgba32> OnSetSecondaryColor = delegate { };
         public event Action<Image<Rgba32>> OnImageReplace = delegate { };
-        public event Action LayoutInvalidateAction = delegate { };
 
-        readonly Sprite Sprite, OverlaySprite;
+        public event Action LayoutInvalidateEvent = delegate { };
+        public event Action<ScrollEvent> ScrollEvent = delegate { };
+
+
+        readonly ScrollSprite Sprite;
+        readonly Sprite OverlaySprite;
 
         Image<Rgba32> _Image = null!;
         public Image<Rgba32> Image
@@ -47,20 +53,10 @@ namespace DeloP.Controls
         public Image<Rgba32> OverlayImage { get; private set; } = null!;
         CachedTextureUpload TextureImageUpload = null!, OverlayTextureUpload = null!;
 
-        float _Zoom = 1;
-        public float Zoom
-        {
-            get => _Zoom;
-            set
-            {
-                _Zoom = value;
-                this.ResizeTo(new Vector2(Image.Width * value, Image.Height * value), 100, Easing.OutQuad);
-            }
-        }
+        // public float Zoom { get; private set; } = 1;
 
         Rgba32 _MainColor = Color.Black;
         Rgba32 _SecondaryColor = Color.White;
-        ITool _CurrentTool = new PencilTool();
 
         public Rgba32 MainColor
         {
@@ -80,33 +76,19 @@ namespace DeloP.Controls
                 OnSetSecondaryColor(value);
             }
         }
-        public ITool CurrentTool
-        {
-            get => _CurrentTool;
-            set
-            {
-                _CurrentTool = value;
-                OnSetTool(value);
-            }
-        }
-
+        public readonly Bindable<ITool> CurrentTool = new Bindable<ITool>();
 
         public Canvas()
         {
-            Sprite = new Sprite();
-            OverlaySprite = new Sprite();
-            Sprite.RelativeSizeAxes = Axes.Both;
-            OverlaySprite.RelativeSizeAxes = Axes.Both;
+            Sprite = new ScrollSprite(e => ScrollEvent(e)) { RelativeSizeAxes = Axes.Both, Anchor = Anchor.Centre, Origin = Anchor.Centre };
+            OverlaySprite = new Sprite() { RelativeSizeAxes = Axes.Both, Anchor = Anchor.Centre, Origin = Anchor.Centre };
         }
-        protected override void LoadComplete()
-        {
-            base.LoadComplete();
 
-            InternalChildren = new Drawable[]
-            {
-                Sprite,
-                OverlaySprite
-            };
+        [BackgroundDependencyLoader]
+        void Load()
+        {
+            AddInternal(Sprite);
+            AddInternal(OverlaySprite);
 
             Image = new Image<Rgba32>(SixLabors.ImageSharp.Configuration.Default, 1000, 1000, Color.White);
             UpdateImage();
@@ -166,7 +148,7 @@ namespace DeloP.Controls
 
         protected override bool OnInvalidate(Invalidation invalidation, InvalidationSource source)
         {
-            if ((invalidation & Invalidation.Layout) != 0) LayoutInvalidateAction();
+            if ((invalidation & Invalidation.Layout) != 0) LayoutInvalidateEvent();
             return base.OnInvalidate(invalidation, source);
         }
 
@@ -187,5 +169,19 @@ namespace DeloP.Controls
             ImageUpdateRect = bounds;
         }
         public void UpdateOverlay() => DoUpdateOverlay = true;
+
+
+        class ScrollSprite : Sprite
+        {
+            readonly Action<ScrollEvent> ScrollAction;
+
+            public ScrollSprite(Action<ScrollEvent> scrollAction) => ScrollAction = scrollAction;
+
+            protected override bool OnScroll(ScrollEvent e)
+            {
+                ScrollAction(e);
+                return base.OnScroll(e);
+            }
+        }
     }
 }
