@@ -50,6 +50,7 @@ namespace DeloP.Containers
             CColors.Y = CTools.DrawPosition.Y + CTools.DrawHeight + 10;
             return base.OnInvalidate(invalidation, source);
         }
+        protected override bool Handle(UIEvent e) => true;
 
 
         class ToolsContainer : CompositeDrawable

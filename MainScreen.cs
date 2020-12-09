@@ -41,8 +41,6 @@ namespace DeloP
                 .Append(new FillTool(FullCanvas))
                 .ToImmutableArray();
 
-            FullCanvas.Canvas.CurrentTool = tools.First();
-
             Window.Title = "DeloP";
             Children = new Drawable[]
             {
@@ -51,7 +49,10 @@ namespace DeloP
                 new ToolSettingsPanel(FullCanvas) { RelativeSizeAxes = Axes.X, Y = MenuHeight, Height = ToolSettingsHeight, Depth = -1 },
                 new ToolPanel(FullCanvas.Canvas, tools) { RelativeSizeAxes = Axes.Y, Y = ToolSettingsHeight + MenuHeight, Width = ToolPanelWidth, Depth = -1 },
                 FullCanvas,
+                new LayersWindow(FullCanvas) { Width = 300, Height = 600 },
             };
+
+            FullCanvas.Canvas.CurrentTool = tools.First();
         }
 
         MenuItem[] CreateMenuItems()
@@ -65,8 +66,8 @@ namespace DeloP
             }
             void clickNew()
             {
-                FullCanvas.Canvas.Image.GetPixelSpan().Fill(Color.White);
-                FullCanvas.Canvas.UpdateImage();
+                FullCanvas.Canvas.Image.Clear();
+                FullCanvas.Canvas.Image.UpdateActiveLayer();
             }
             void clickOpen()
             {
@@ -75,8 +76,8 @@ namespace DeloP
                 {
                     try
                     {
-                        FullCanvas.Canvas.Image = Image.Load<Rgba32>(e.NewValue.FullName);
-                        FullCanvas.Canvas.UpdateImage();
+                        FullCanvas.Canvas.Image.Clear();
+                        FullCanvas.Canvas.Image.AddLayer(Image.Load<Rgba32>(e.NewValue.FullName));
                         openedPath = e.NewValue.FullName;
 
                         Schedule(() => Remove(selector));
@@ -89,14 +90,14 @@ namespace DeloP
             void clickSave() => Task.Run(() =>
             {
                 if (openedPath is null) clickSaveAs();
-                else save(FullCanvas.Canvas.Image, openedPath);
+                else save(FullCanvas.Canvas.Image.AsOne(), openedPath);
             });
             void clickSaveAs()
             {
                 var selector = new BackgroundDrawable<DeloFileSaveSelector>(new DeloFileSaveSelector()) { RelativeSizeAxes = Axes.Both, Depth = -99, Background = Colors.Background };
                 selector.Child.OnSelect += p => Task.Run(() =>
                 {
-                    save(FullCanvas.Canvas.Image, openedPath = p);
+                    save(FullCanvas.Canvas.Image.AsOne(), openedPath = p);
                     Schedule(() => Remove(selector));
                 });
 

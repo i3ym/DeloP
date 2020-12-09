@@ -4,6 +4,7 @@ using DeloP.ToolSettings;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
+using osu.Framework.Input.Events;
 
 namespace DeloP.Containers
 {
@@ -40,5 +41,7 @@ namespace DeloP.Containers
                 Container
             };
         }
+
+        protected override bool Handle(UIEvent e) => true;
     }
 }

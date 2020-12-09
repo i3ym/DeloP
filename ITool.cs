@@ -54,8 +54,8 @@ namespace DeloP
 
         void DrawLine(int sx, int sy, int ex, int ey, Canvas Canvas, Rgba32 color)
         {
-            ShapeTool.DrawLine(sx, sy, ex, ey, Canvas.Image, color, Thickness);
-            Canvas.UpdateImage(new RectangleI(sx - Thickness, sy - Thickness, ex + Thickness, ey + Thickness));
+            ShapeTool.DrawLine(sx, sy, ex, ey, Canvas.Image.ActiveImage, color, Thickness);
+            Canvas.Image.UpdateActiveLayer(new RectangleI(sx - Thickness, sy - Thickness, ex + Thickness, ey + Thickness));
         }
     }
     public class EraserTool : ThicknessTool, IThicknessTool
@@ -72,13 +72,13 @@ namespace DeloP
 
         void DrawLine(int sx, int sy, int ex, int ey, Canvas Canvas)
         {
-            ShapeTool.DrawLine(sx, sy, ex, ey, Canvas.Image, Canvas.SecondaryColor, Thickness);
-            Canvas.UpdateImage(new RectangleI(sx - Thickness, sy - Thickness, ex + Thickness, ey + Thickness));
+            ShapeTool.DrawLine(sx, sy, ex, ey, Canvas.Image.ActiveImage, Canvas.SecondaryColor, Thickness);
+            Canvas.Image.UpdateActiveLayer(new RectangleI(sx - Thickness, sy - Thickness, ex + Thickness, ey + Thickness));
         }
         void DrawLineReplace(int sx, int sy, int ex, int ey, Canvas Canvas)
         {
-            DrawLine(sx, sy, ex, ey, Canvas.Image, Canvas.MainColor, Canvas.SecondaryColor, Thickness);
-            Canvas.UpdateImage(new RectangleI(sx - Thickness, sy - Thickness, ex + Thickness, ey + Thickness));
+            DrawLine(sx, sy, ex, ey, Canvas.Image.ActiveImage, Canvas.MainColor, Canvas.SecondaryColor, Thickness);
+            Canvas.Image.UpdateActiveLayer(new RectangleI(sx - Thickness, sy - Thickness, ex + Thickness, ey + Thickness));
         }
 
 
@@ -168,9 +168,10 @@ namespace DeloP
         public void OnEnd(int sx, int sy, int ex, int ey)
         {
             Draw(StartX, StartY, OldEndX, OldEndY, Canvas.OverlayImage, Color.Transparent);
-            Draw(StartX, StartY, ex, ey, Canvas.Image, Canvas.MainColor);
-            Canvas.UpdateOverlay();
-            Canvas.UpdateImage();
+            Draw(StartX, StartY, ex, ey, Canvas.Image.ActiveImage, Canvas.MainColor);
+
+            Canvas.UpdateOverlaySprite();
+            Canvas.Image.UpdateActiveLayer();
         }
 
         public void OnMove(int sx, int sy, int ex, int ey)
@@ -179,7 +180,7 @@ namespace DeloP
             Draw(StartX, StartY, ex, ey, Canvas.OverlayImage, Canvas.MainColor);
 
             (OldEndX, OldEndY) = (ex, ey);
-            Canvas.UpdateOverlay();
+            Canvas.UpdateOverlaySprite();
         }
 
         protected virtual void Draw(int startX, int startY, int endX, int endY, Image<Rgba32> image, Rgba32 color) =>
@@ -306,14 +307,14 @@ namespace DeloP
 
         public void OnStart(int x, int y)
         {
-            Fill(x, y, Canvas.Image, Canvas.MainColor);
-            Canvas.UpdateImage();
+            Fill(x, y, Canvas.Image.ActiveImage, Canvas.MainColor);
+            Canvas.Image.UpdateActiveLayer();
         }
         public void OnEnd(int sx, int sy, int ex, int ey) { }
         public void OnMove(int sx, int sy, int ex, int ey)
         {
-            Fill(ex, ey, Canvas.Image, Canvas.MainColor);
-            Canvas.UpdateImage();
+            Fill(ex, ey, Canvas.Image.ActiveImage, Canvas.MainColor);
+            Canvas.Image.UpdateActiveLayer();
         }
 
 

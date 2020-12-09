@@ -5,14 +5,10 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.Sprites;
-using osu.Framework.Graphics.Textures;
 using osu.Framework.Input.Events;
 using osu.Framework.Layout;
-using osuTK;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
-using SixLabors.Primitives;
 
 namespace DeloP.Controls
 {
@@ -21,110 +17,52 @@ namespace DeloP.Controls
         public event Action LayoutInvalidateEvent = delegate { };
         public event Action<ScrollEvent> ScrollEvent = delegate { };
 
-        readonly ScrollSprite Sprite;
         readonly Sprite OverlaySprite;
-
-        readonly CachedTextureUpload TextureImageUpload = new CachedTextureUpload();
         readonly CachedTextureUpload OverlayTextureUpload = new CachedTextureUpload();
-
-        public Image<Rgba32> Image
+        Image<Rgba32> _OverlayImage = null!;
+        public Image<Rgba32> OverlayImage
         {
-            get => ImageBindable.Value;
-            set
+            get => _OverlayImage;
+            private set
             {
-                ((Bindable<Image<Rgba32>>) ImageBindable).Value = value;
-                ((Bindable<Image<Rgba32>>) OverlayImageBindable).Value = new Image<Rgba32>(SixLabors.ImageSharp.Configuration.Default, Image.Width, Image.Height, Color.Transparent);
-
-                Sprite.Texture = new Texture(Image.Width, Image.Height, true, osuTK.Graphics.ES30.All.Nearest);
-                Sprite.Texture.TextureGL.BypassTextureUploadQueueing = true;
-
-                OverlaySprite.Texture = new Texture(Image.Width, Image.Height, true, osuTK.Graphics.ES30.All.Nearest);
-                OverlaySprite.Texture.TextureGL.BypassTextureUploadQueueing = true;
-
-                TextureImageUpload.Image = Image;
-                OverlayTextureUpload.Image = OverlayImage;
-
-                UpdateImage();
+                _OverlayImage = value;
+                OverlayTextureUpload.Image = value;
+                UpdateOverlaySprite();
             }
         }
-        public Image<Rgba32> OverlayImage => OverlayImageBindable.Value;
+
+        public readonly DeloImage Image;
         public Rgba32 MainColor { get => MainColorBindable.Value; set => MainColorBindable.Value = value; }
         public Rgba32 SecondaryColor { get => SecondaryColorBindable.Value; set => SecondaryColorBindable.Value = value; }
         public ITool CurrentTool { get => CurrentToolBindable.Value; set => CurrentToolBindable.Value = value; }
 
-        public readonly IBindable<Image<Rgba32>> ImageBindable = new Bindable<Image<Rgba32>>();
-        public readonly IBindable<Image<Rgba32>> OverlayImageBindable = new Bindable<Image<Rgba32>>();
         public readonly Bindable<Rgba32> MainColorBindable = new Bindable<Rgba32>();
         public readonly Bindable<Rgba32> SecondaryColorBindable = new Bindable<Rgba32>();
         public readonly Bindable<ITool> CurrentToolBindable = new Bindable<ITool>();
 
         public Canvas()
         {
-            Sprite = new ScrollSprite(e => ScrollEvent(e)) { RelativeSizeAxes = Axes.Both, Anchor = Anchor.Centre, Origin = Anchor.Centre };
+            Image = new DeloImage() { Width = 1000, Height = 1000 };
             OverlaySprite = new Sprite() { RelativeSizeAxes = Axes.Both, Anchor = Anchor.Centre, Origin = Anchor.Centre };
+            OverlayImage = new Image<Rgba32>(SixLabors.ImageSharp.Configuration.Default, (int) Image.Width, (int) Image.Height, Color.Transparent);
         }
 
         [BackgroundDependencyLoader]
         void Load()
         {
-            AddInternal(Sprite);
-            AddInternal(OverlaySprite);
+            AutoSizeAxes = Axes.Both;
 
-            Image = new Image<Rgba32>(SixLabors.ImageSharp.Configuration.Default, 1000, 1000, Color.White);
-            UpdateImage();
+            AddInternal(Image);
+            AddInternal(OverlaySprite);
 
             MainColor = Color.Black;
             SecondaryColor = Color.White;
-        }
 
-
-        int i = 0;
-        protected override void Update()
-        {
-            i++;
-            base.Update();
-
-            if (DoUpdateImage)
-            {
-                DoUpdateImage = false;
-
-                if (ImageUpdateRect.HasValue)
-                {
-                    var b = TextureImageUpload.Bounds;
-                    TextureImageUpload.Bounds = ImageUpdateRect.Value;
-                    Sprite.Texture.SetData(TextureImageUpload);
-
-                    TextureImageUpload.Bounds = b;
-                    ImageUpdateRect = null;
-                }
-                else Sprite.Texture.SetData(TextureImageUpload);
-            }
-            if (DoUpdateOverlay)
-            {
-                DoUpdateOverlay = false;
-
-                if (OverlayUpdateRect.HasValue)
-                {
-                    var b = OverlayTextureUpload.Bounds;
-                    OverlayTextureUpload.Bounds = OverlayUpdateRect.Value;
-                    OverlaySprite.Texture.SetData(TextureImageUpload);
-
-                    OverlayTextureUpload.Bounds = b;
-                    OverlayUpdateRect = null;
-                }
-                else OverlaySprite.Texture.SetData(OverlayTextureUpload);
-            }
+            Image.AddLayer(SecondaryColor);
         }
 
         public void ChangeSize(int width, int height) => ChangeSize(0, 0, width, height);
-        public void ChangeSize(int dx, int dy, int width, int height)
-        {
-            var newimg = new Image<Rgba32>(SixLabors.ImageSharp.Configuration.Default, width, height, Rgba32.White);
-            newimg.Mutate(ctx => ctx.DrawImage(Image, new Point(dx, dy), 1f));
-            Image = newimg;
-
-            UpdateImage();
-        }
+        public void ChangeSize(int dx, int dy, int width, int height) => Image.Resize(dx, dy, width, height);
 
         protected override bool OnInvalidate(Invalidation invalidation, InvalidationSource source)
         {
@@ -134,34 +72,13 @@ namespace DeloP.Controls
 
         public (int x, int y) ToImageFromScreen(int screenMousex, int screenMousey) =>
             (
-                (int) ((screenMousex - ScreenSpaceDrawQuad.TopLeft.X) / Scale.X / Sprite.DrawWidth * Image.Width),
-                (int) ((screenMousey - ScreenSpaceDrawQuad.TopLeft.Y) / Scale.Y / Sprite.DrawHeight * Image.Height)
+                (int) ((screenMousex - ScreenSpaceDrawQuad.TopLeft.X) / Scale.X / Image.DrawWidth * Image.Width),
+                (int) ((screenMousey - ScreenSpaceDrawQuad.TopLeft.Y) / Scale.Y / Image.DrawHeight * Image.Height)
             );
 
-        bool DoUpdateImage, DoUpdateOverlay;
-        RectangleI? ImageUpdateRect, OverlayUpdateRect;
 
-
-        public void UpdateImage() => DoUpdateImage = true;
-        public void UpdateImage(RectangleI bounds)
-        {
-            DoUpdateImage = true;
-            ImageUpdateRect = bounds;
-        }
-        public void UpdateOverlay() => DoUpdateOverlay = true;
-
-
-        class ScrollSprite : Sprite
-        {
-            readonly Action<ScrollEvent> ScrollAction;
-
-            public ScrollSprite(Action<ScrollEvent> scrollAction) => ScrollAction = scrollAction;
-
-            protected override bool OnScroll(ScrollEvent e)
-            {
-                ScrollAction(e);
-                return base.OnScroll(e);
-            }
-        }
+        bool DoUpdateOverlay; // TODO: move into DeloImage
+        RectangleI? OverlayUpdateRect;
+        public void UpdateOverlaySprite() => DoUpdateOverlay = true;
     }
 }

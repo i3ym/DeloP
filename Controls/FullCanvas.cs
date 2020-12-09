@@ -27,7 +27,6 @@ namespace DeloP.Controls
                 if (!e.ControlPressed) return;
                 SetZoom(Zoom.Value + e.ScrollDelta.Y / 100f * 2, e.MousePosition);
             };
-            Canvas.ImageBindable.ValueChanged += e => Canvas.Size = new Vector2(e.NewValue.Width, e.NewValue.Height);
             CanvasResizer.OnResize += e =>
             {
                 Canvas.Position = e.EndPos;
@@ -36,6 +35,10 @@ namespace DeloP.Controls
             };
             Canvas.LayoutInvalidateEvent += () =>
             {
+                const float margin = 50;
+                try { Canvas.Position = new Vector2(Math.Clamp(Canvas.X, -Canvas.Width + margin, DrawWidth - margin), Math.Clamp(Canvas.Y, -Canvas.Height + margin, DrawHeight - margin)); }
+                catch { }
+
                 CanvasResizer.Position = Canvas.DrawPosition;
                 CanvasResizer.Size = Canvas.DrawSize;
             };
