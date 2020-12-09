@@ -41,7 +41,7 @@ namespace DeloP
                 .Append(new FillTool(FullCanvas))
                 .ToImmutableArray();
 
-            FullCanvas.Canvas.CurrentTool.Value = tools.First();
+            FullCanvas.Canvas.CurrentTool = tools.First();
 
             Window.Title = "DeloP";
             Children = new Drawable[]

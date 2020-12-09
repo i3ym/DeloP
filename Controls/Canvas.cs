@@ -18,65 +18,45 @@ namespace DeloP.Controls
 {
     public class Canvas : CompositeDrawable
     {
-        public event Action<Rgba32> OnSetMainColor = delegate { };
-        public event Action<Rgba32> OnSetSecondaryColor = delegate { };
-        public event Action<Image<Rgba32>> OnImageReplace = delegate { };
-
         public event Action LayoutInvalidateEvent = delegate { };
         public event Action<ScrollEvent> ScrollEvent = delegate { };
-
 
         readonly ScrollSprite Sprite;
         readonly Sprite OverlaySprite;
 
-        Image<Rgba32> _Image = null!;
+        readonly CachedTextureUpload TextureImageUpload = new CachedTextureUpload();
+        readonly CachedTextureUpload OverlayTextureUpload = new CachedTextureUpload();
+
         public Image<Rgba32> Image
         {
-            get => _Image;
+            get => ImageBindable.Value;
             set
             {
-                _Image = value;
-                OverlayImage = new Image<Rgba32>(SixLabors.ImageSharp.Configuration.Default, Image.Width, Image.Height, Color.Transparent);
+                ((Bindable<Image<Rgba32>>) ImageBindable).Value = value;
+                ((Bindable<Image<Rgba32>>) OverlayImageBindable).Value = new Image<Rgba32>(SixLabors.ImageSharp.Configuration.Default, Image.Width, Image.Height, Color.Transparent);
 
                 Sprite.Texture = new Texture(Image.Width, Image.Height, true, osuTK.Graphics.ES30.All.Nearest);
                 Sprite.Texture.TextureGL.BypassTextureUploadQueueing = true;
+
                 OverlaySprite.Texture = new Texture(Image.Width, Image.Height, true, osuTK.Graphics.ES30.All.Nearest);
                 OverlaySprite.Texture.TextureGL.BypassTextureUploadQueueing = true;
 
-                TextureImageUpload = new CachedTextureUpload(Image);
-                OverlayTextureUpload = new CachedTextureUpload(OverlayImage);
+                TextureImageUpload.Image = Image;
+                OverlayTextureUpload.Image = OverlayImage;
 
                 UpdateImage();
-                OnImageReplace(value);
             }
         }
-        public Image<Rgba32> OverlayImage { get; private set; } = null!;
-        CachedTextureUpload TextureImageUpload = null!, OverlayTextureUpload = null!;
+        public Image<Rgba32> OverlayImage => OverlayImageBindable.Value;
+        public Rgba32 MainColor { get => MainColorBindable.Value; set => MainColorBindable.Value = value; }
+        public Rgba32 SecondaryColor { get => SecondaryColorBindable.Value; set => SecondaryColorBindable.Value = value; }
+        public ITool CurrentTool { get => CurrentToolBindable.Value; set => CurrentToolBindable.Value = value; }
 
-        // public float Zoom { get; private set; } = 1;
-
-        Rgba32 _MainColor = Color.Black;
-        Rgba32 _SecondaryColor = Color.White;
-
-        public Rgba32 MainColor
-        {
-            get => _MainColor;
-            set
-            {
-                _MainColor = value;
-                OnSetMainColor(value);
-            }
-        }
-        public Rgba32 SecondaryColor
-        {
-            get => _SecondaryColor;
-            set
-            {
-                _SecondaryColor = value;
-                OnSetSecondaryColor(value);
-            }
-        }
-        public readonly Bindable<ITool> CurrentTool = new Bindable<ITool>();
+        public readonly IBindable<Image<Rgba32>> ImageBindable = new Bindable<Image<Rgba32>>();
+        public readonly IBindable<Image<Rgba32>> OverlayImageBindable = new Bindable<Image<Rgba32>>();
+        public readonly Bindable<Rgba32> MainColorBindable = new Bindable<Rgba32>();
+        public readonly Bindable<Rgba32> SecondaryColorBindable = new Bindable<Rgba32>();
+        public readonly Bindable<ITool> CurrentToolBindable = new Bindable<ITool>();
 
         public Canvas()
         {

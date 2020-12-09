@@ -15,12 +15,17 @@ namespace DeloP
         public RectangleI Bounds { get; set; }
         public PixelFormat Format => PixelFormat.Rgba;
 
-        readonly Image<Rgba32> Image;
-
-        public CachedTextureUpload(Image<Rgba32> image)
+        Image<Rgba32>? _Image;
+        public Image<Rgba32>? Image
         {
-            Image = image;
-            Bounds = new RectangleI(0, 0, Image.Width, Image.Height);
+            get => _Image;
+            set
+            {
+                if (value is null) throw new NullReferenceException();
+
+                _Image = value;
+                Bounds = new RectangleI(0, 0, value.Width, value.Height);
+            }
         }
 
         void IDisposable.Dispose() { }

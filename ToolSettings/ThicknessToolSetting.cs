@@ -19,7 +19,7 @@ namespace DeloP.ToolSettings
                     tt.Thickness = t;
             };
 
-            canvas.CurrentTool.ValueChanged += e =>
+            canvas.CurrentToolBindable.ValueChanged += e =>
             {
                 if (e.NewValue is IThicknessTool tt)
                     Input.Value = (int) tt.Thickness;

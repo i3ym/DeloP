@@ -27,7 +27,7 @@ namespace DeloP.Controls
                 if (!e.ControlPressed) return;
                 SetZoom(Zoom.Value + e.ScrollDelta.Y / 100f * 2, e.MousePosition);
             };
-            Canvas.OnImageReplace += img => Canvas.Size = new Vector2(img.Width, img.Height);
+            Canvas.ImageBindable.ValueChanged += e => Canvas.Size = new Vector2(e.NewValue.Width, e.NewValue.Height);
             CanvasResizer.OnResize += e =>
             {
                 Canvas.Position = e.EndPos;
@@ -76,8 +76,8 @@ namespace DeloP.Controls
             (LastMouseX, LastMouseY) = ((int) e.ScreenSpaceMouseDownPosition.X, (int) e.ScreenSpaceMouseDownPosition.Y);
 
             var (x, y) = Canvas.ToImageFromScreen((int) e.ScreenSpaceMouseDownPosition.X, (int) e.ScreenSpaceMouseDownPosition.Y);
-            if (e.Button == MouseButton.Left) Canvas.CurrentTool.Value.OnStart(x, y);
-            else if (e.Button == MouseButton.Right) Canvas.CurrentTool.Value.OnStartRight(x, y);
+            if (e.Button == MouseButton.Left) Canvas.CurrentTool.OnStart(x, y);
+            else if (e.Button == MouseButton.Right) Canvas.CurrentTool.OnStartRight(x, y);
 
             return false;
         }
@@ -91,8 +91,8 @@ namespace DeloP.Controls
             var (sx, sy) = Canvas.ToImageFromScreen((int) e.ScreenSpaceMouseDownPosition.X, (int) e.ScreenSpaceMouseDownPosition.Y);
             var (ex, ey) = Canvas.ToImageFromScreen((int) e.ScreenSpaceMousePosition.X, (int) e.ScreenSpaceMousePosition.Y);
 
-            if (e.Button == MouseButton.Left) Canvas.CurrentTool.Value.OnEnd(sx, sy, ex, ey);
-            else if (e.Button == MouseButton.Right) Canvas.CurrentTool.Value.OnEndRight(sx, sy, ex, ey);
+            if (e.Button == MouseButton.Left) Canvas.CurrentTool.OnEnd(sx, sy, ex, ey);
+            else if (e.Button == MouseButton.Right) Canvas.CurrentTool.OnEndRight(sx, sy, ex, ey);
         }
         public bool MouseMove(MouseMoveEvent e)
         {
@@ -104,8 +104,8 @@ namespace DeloP.Controls
 
             (LastMouseX, LastMouseY) = ((int) e.ScreenSpaceMousePosition.X, (int) e.ScreenSpaceMousePosition.Y);
 
-            if (DrawType == DrawingType.Left) Canvas.CurrentTool.Value.OnMove(x, y, tx, ty);
-            else if (DrawType == DrawingType.Right) Canvas.CurrentTool.Value.OnMoveRight(x, y, tx, ty);
+            if (DrawType == DrawingType.Left) Canvas.CurrentTool.OnMove(x, y, tx, ty);
+            else if (DrawType == DrawingType.Right) Canvas.CurrentTool.OnMoveRight(x, y, tx, ty);
 
             return false;
         }

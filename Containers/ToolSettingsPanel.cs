@@ -28,7 +28,7 @@ namespace DeloP.Containers
 
             Container.AddRange(tools);
 
-            canvas.CurrentTool.ValueChanged += e =>
+            canvas.CurrentToolBindable.ValueChanged += e =>
             {
                 foreach (var child in Container.Children.OfType<ToolSettingBase>())
                     child.Alpha = child.AppliesTo(e.NewValue) ? 1 : 0;

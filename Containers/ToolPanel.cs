@@ -95,7 +95,7 @@ namespace DeloP.Containers
 
                     Sprite.Texture = TextureStore.Get(Tool.SpriteName);
 
-                    Canvas.CurrentTool.ValueChanged += e =>
+                    Canvas.CurrentToolBindable.ValueChanged += e =>
                     {
                         IsSelected = e.NewValue == Tool;
                         DarkBorderBox.Alpha = BackgroundBox.Alpha = IsSelected ? 1 : 0;
@@ -114,7 +114,7 @@ namespace DeloP.Containers
                 }
                 protected override bool OnClick(ClickEvent e)
                 {
-                    Canvas.CurrentTool.Value = Tool;
+                    Canvas.CurrentTool = Tool;
                     return base.OnClick(e);
                 }
             }
@@ -177,14 +177,14 @@ namespace DeloP.Containers
                 public CurrentColors(Canvas canvas)
                 {
                     Color1 = new ChooseColorBox(canvas, Colour4.Black);
-                    canvas.OnSetMainColor += c => Color1.InternalColour = new Colour4(c.R, c.G, c.B, 255);
+                    canvas.MainColorBindable.ValueChanged += e => Color1.InternalColour = new Colour4(e.NewValue.R, e.NewValue.G, e.NewValue.B, 255);
                     /* Color1.ClickEvent += _ =>
                      {
                          // TODO:
                      };*/
 
                     Color2 = new ChooseColorBox(canvas, Colour4.Black);
-                    canvas.OnSetSecondaryColor += c => Color2.InternalColour = new Colour4(c.R, c.G, c.B, 255);
+                    canvas.SecondaryColorBindable.ValueChanged += e => Color2.InternalColour = new Colour4(e.NewValue.R, e.NewValue.G, e.NewValue.B, 255);
                     /* Color2.ClickEvent += _ =>
                      {
                          // TODO:
