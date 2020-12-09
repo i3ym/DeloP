@@ -23,6 +23,6 @@ namespace DeloP
             }
         }
 
-        bool CheckConstraints(int x, int y) => x >= 0 && y >= 0 && x < Image.Width && y < Image.Height;
+        public bool CheckConstraints(int x, int y) => x >= 0 && y >= 0 && x < Image.Width && y < Image.Height;
     }
 }

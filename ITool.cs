@@ -332,6 +332,7 @@ namespace DeloP
             {
                 var point = CachedQueue.Dequeue();
                 if (ct[point.X, point.Y] != bg) continue;
+                if (!ct.CheckConstraints(point.X, point.Y)) continue;
 
                 ct[point.X, point.Y] = color;
                 point.AddPoints(CachedQueue);
