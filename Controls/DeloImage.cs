@@ -16,7 +16,7 @@ namespace DeloP.Controls
 {
     public class DeloImage : CompositeDrawable, IEnumerable<SKBitmap>
     {
-        public event Action<ScrollEvent> ScrollAction = delegate { };
+        public event Action<ScrollEvent> ScrollEvent = delegate { };
 
         public IBindableList<Layer> Layers => _Layers;
         readonly BindableList<Layer> _Layers = new();
@@ -53,7 +53,7 @@ namespace DeloP.Controls
 
         protected override bool OnScroll(ScrollEvent e)
         {
-            ScrollAction(e);
+            ScrollEvent(e);
             return base.OnScroll(e);
         }
 

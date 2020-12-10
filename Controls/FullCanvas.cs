@@ -24,7 +24,7 @@ namespace DeloP.Controls
 
             Canvas.ScrollEvent += e =>
             {
-                if (!e.ControlPressed) return;
+                if (!e.ControlPressed && !e.AltPressed) return;
                 SetZoom(Zoom.Value + e.ScrollDelta.Y / 100f * 2, e.MousePosition);
             };
             CanvasResizer.OnResize += e =>
@@ -35,26 +35,36 @@ namespace DeloP.Controls
             };
             Canvas.LayoutInvalidateEvent += () =>
             {
-                const float margin = 50;
-                try { Canvas.Position = new Vector2(Math.Clamp(Canvas.X, -Canvas.Width + margin, DrawWidth - margin), Math.Clamp(Canvas.Y, -Canvas.Height + margin, DrawHeight - margin)); }
-                catch { }
+                const float margin = 150;
+
+                var br = Canvas.BoundingBox.BottomRight;
+                if (br.X < margin) Canvas.X += margin - br.X;
+                if (br.Y < margin) Canvas.Y += margin - br.Y;
+
+                if (Parent is { })
+                {
+                    var tl = Canvas.BoundingBox.TopLeft;
+                    if (tl.X > Parent.DrawWidth - margin) Canvas.X = Parent.DrawWidth - margin;
+                    if (tl.Y > Parent.DrawHeight - margin) Canvas.Y = Parent.DrawHeight - margin;
+                }
+
 
                 CanvasResizer.Position = Canvas.DrawPosition;
-                CanvasResizer.Size = Canvas.DrawSize;
+                CanvasResizer.Size = Canvas.Size * Canvas.Scale;
             };
         }
 
-        public void SetZoom(float value) => SetZoom(value, new Vector2(Canvas.Width / 2, Canvas.Height / 2));
-        public void SetZoom(float value, Vector2 mousePos)
+        public void SetZoom(float value) => SetZoom(value, Canvas.DrawSize / 2);
+        public void SetZoom(float value, Vector2 origin)
         {
             value = Math.Max(value, .1f);
-            mousePos = new Vector2(mousePos.X / Canvas.Width * Canvas.Image.Width, mousePos.Y / Canvas.Height * Canvas.Image.Height);
+            origin = new Vector2(origin.X / Canvas.Width * Canvas.Image.Width, origin.Y / Canvas.Height * Canvas.Image.Height);
 
-            var offset = (value - Zoom.Value) * mousePos;
+            var offset = (value - Zoom.Value) * origin;
             ((Bindable<float>) Zoom).Value = value;
 
             Canvas.FinishTransforms();
-            Canvas.ResizeTo(new Vector2(Canvas.Image.Width * value, Canvas.Image.Height * value), 100, Easing.OutQuad);
+            Canvas.ScaleTo(value, 100, Easing.OutQuad);
             Canvas.MoveTo(Canvas.Position - offset, 100, Easing.OutQuad);
         }
 

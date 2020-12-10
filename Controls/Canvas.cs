@@ -37,6 +37,7 @@ namespace DeloP.Controls
 
             Image.Resize(0, 0, 1000, 1000);
             Image.ActiveLayer.Canvas.Clear(SecondaryColor);
+            Image.ScrollEvent += e => ScrollEvent(e);
         }
 
         public void ChangeSize(int width, int height) => ChangeSize(0, 0, width, height);
