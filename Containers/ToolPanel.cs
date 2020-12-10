@@ -11,6 +11,7 @@ using osu.Framework.Input.Events;
 using osu.Framework.Layout;
 using osuTK.Input;
 using SixLabors.ImageSharp.PixelFormats;
+using SkiaSharp;
 
 namespace DeloP.Containers
 {
@@ -178,14 +179,14 @@ namespace DeloP.Containers
                 public CurrentColors(Canvas canvas)
                 {
                     Color1 = new ChooseColorBox(canvas, Colour4.Black);
-                    canvas.MainColorBindable.ValueChanged += e => Color1.InternalColour = new Colour4(e.NewValue.R, e.NewValue.G, e.NewValue.B, 255);
+                    canvas.MainColorBindable.ValueChanged += e => Color1.InternalColour = new Colour4(e.NewValue.Red, e.NewValue.Green, e.NewValue.Blue, 255);
                     /* Color1.ClickEvent += _ =>
                      {
                          // TODO:
                      };*/
 
                     Color2 = new ChooseColorBox(canvas, Colour4.Black);
-                    canvas.SecondaryColorBindable.ValueChanged += e => Color2.InternalColour = new Colour4(e.NewValue.R, e.NewValue.G, e.NewValue.B, 255);
+                    canvas.SecondaryColorBindable.ValueChanged += e => Color2.InternalColour = new Colour4(e.NewValue.Red, e.NewValue.Green, e.NewValue.Blue, 255);
                     /* Color2.ClickEvent += _ =>
                      {
                          // TODO:
@@ -259,8 +260,8 @@ namespace DeloP.Containers
                 {
                     if (base.OnMouseDown(e)) return true;
 
-                    if (e.Button == MouseButton.Left) Canvas.MainColor = new Rgba32(Color.R, Color.G, Color.B);
-                    else if (e.Button == MouseButton.Right) Canvas.SecondaryColor = new Rgba32(Color.R, Color.G, Color.B);
+                    if (e.Button == MouseButton.Left) Canvas.MainColor = new SKColor(Color.ToRGBA());
+                    else if (e.Button == MouseButton.Right) Canvas.SecondaryColor = new SKColor(Color.ToRGBA());
 
                     return false;
                 }

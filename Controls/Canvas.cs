@@ -3,12 +3,9 @@ using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Framework.Graphics.Primitives;
-using osu.Framework.Graphics.Sprites;
 using osu.Framework.Input.Events;
 using osu.Framework.Layout;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using SkiaSharp;
 
 namespace DeloP.Controls
 {
@@ -17,48 +14,29 @@ namespace DeloP.Controls
         public event Action LayoutInvalidateEvent = delegate { };
         public event Action<ScrollEvent> ScrollEvent = delegate { };
 
-        readonly Sprite OverlaySprite;
-        readonly CachedTextureUpload OverlayTextureUpload = new CachedTextureUpload();
-        Image<Rgba32> _OverlayImage = null!;
-        public Image<Rgba32> OverlayImage
-        {
-            get => _OverlayImage;
-            private set
-            {
-                _OverlayImage = value;
-                OverlayTextureUpload.Image = value;
-                UpdateOverlaySprite();
-            }
-        }
-
-        public readonly DeloImage Image;
-        public Rgba32 MainColor { get => MainColorBindable.Value; set => MainColorBindable.Value = value; }
-        public Rgba32 SecondaryColor { get => SecondaryColorBindable.Value; set => SecondaryColorBindable.Value = value; }
+        public SKColor MainColor { get => MainColorBindable.Value; set => MainColorBindable.Value = value; }
+        public SKColor SecondaryColor { get => SecondaryColorBindable.Value; set => SecondaryColorBindable.Value = value; }
         public ITool CurrentTool { get => CurrentToolBindable.Value; set => CurrentToolBindable.Value = value; }
 
-        public readonly Bindable<Rgba32> MainColorBindable = new Bindable<Rgba32>();
-        public readonly Bindable<Rgba32> SecondaryColorBindable = new Bindable<Rgba32>();
+        public readonly Bindable<SKColor> MainColorBindable = new Bindable<SKColor>();
+        public readonly Bindable<SKColor> SecondaryColorBindable = new Bindable<SKColor>();
         public readonly Bindable<ITool> CurrentToolBindable = new Bindable<ITool>();
 
-        public Canvas()
-        {
-            Image = new DeloImage() { Width = 1000, Height = 1000 };
-            OverlaySprite = new Sprite() { RelativeSizeAxes = Axes.Both, Anchor = Anchor.Centre, Origin = Anchor.Centre };
-            OverlayImage = new Image<Rgba32>(SixLabors.ImageSharp.Configuration.Default, (int) Image.Width, (int) Image.Height, Color.Transparent);
-        }
+        public readonly DeloImage Image = new DeloImage();
+        public SKCanvas OverlayCanvas => Image.OverlayCanvas;
+        public SKBitmap OverlayImage => Image.OverlayImage;
 
         [BackgroundDependencyLoader]
         void Load()
         {
             AutoSizeAxes = Axes.Both;
+            InternalChild = Image;
 
-            AddInternal(Image);
-            AddInternal(OverlaySprite);
+            MainColor = new SKColor(0, 0, 0);
+            SecondaryColor = new SKColor(255, 255, 255);
 
-            MainColor = Color.Black;
-            SecondaryColor = Color.White;
-
-            Image.AddLayer(SecondaryColor);
+            Image.Resize(0, 0, 1000, 1000);
+            Image.ActiveLayer.Canvas.Clear(SecondaryColor);
         }
 
         public void ChangeSize(int width, int height) => ChangeSize(0, 0, width, height);
@@ -75,10 +53,5 @@ namespace DeloP.Controls
                 (int) ((screenMousex - ScreenSpaceDrawQuad.TopLeft.X) / Scale.X / Image.DrawWidth * Image.Width),
                 (int) ((screenMousey - ScreenSpaceDrawQuad.TopLeft.Y) / Scale.Y / Image.DrawHeight * Image.Height)
             );
-
-
-        bool DoUpdateOverlay; // TODO: move into DeloImage
-        RectangleI? OverlayUpdateRect;
-        public void UpdateOverlaySprite() => DoUpdateOverlay = true;
     }
 }

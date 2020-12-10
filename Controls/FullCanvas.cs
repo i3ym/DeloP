@@ -18,7 +18,7 @@ namespace DeloP.Controls
 
         public FullCanvas()
         {
-            AddInternal(Canvas = new Canvas() { });
+            AddInternal(Canvas = new Canvas());
             AddInternal(CanvasResizer = new ResizableContainer() { Anchor = Canvas.Anchor, Origin = Canvas.Origin });
 
 

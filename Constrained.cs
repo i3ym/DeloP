@@ -1,25 +1,24 @@
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using SkiaSharp;
 
 namespace DeloP
 {
     public readonly struct Constrained
     {
-        readonly Image<Rgba32> Image;
+        readonly SKBitmap Image;
 
-        public Constrained(Image<Rgba32> image) => Image = image;
+        public Constrained(SKBitmap image) => Image = image;
 
-        public Rgba32 this[int x, int y]
+        public SKColor this[int x, int y]
         {
             get
             {
-                if (!CheckConstraints(x, y)) return Rgba32.Transparent;
-                return Image[x, y];
+                if (!CheckConstraints(x, y)) return SKColor.Empty;
+                return Image.GetPixel(x, y);
             }
             set
             {
                 if (!CheckConstraints(x, y)) return;
-                Image[x, y] = value;
+                Image.SetPixel(x, y, value);
             }
         }
 

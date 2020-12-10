@@ -1,32 +1,72 @@
 using osu.Framework.Bindables;
+using osu.Framework.Graphics;
+using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
-using SixLabors.ImageSharp.PixelFormats;
-using Img = SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32>;
+using SkiaSharp;
 
 namespace DeloP
 {
-    public class Layer
+    public class Layer : CompositeDrawable
     {
-        public bool DoUpdate = false;
-        public RectangleI? UpdateBounds;
+        readonly Sprite Sprite;
+        public SKCanvas Canvas { get; private set; }
+        public SKBitmap Image { get; private set; }
+        public ITextureUpload Upload { get; private set; }
 
-        public readonly Sprite Sprite;
-        public readonly Img Image;
-        public readonly ITextureUpload Upload;
         public readonly Bindable<bool> IsVisible = new Bindable<bool>(true);
-        public readonly Bindable<string> Name = new Bindable<string>(string.Empty);
+        public new readonly Bindable<string> Name = new Bindable<string>(string.Empty);
 
-        public Layer(Sprite sprite, Img image, ITextureUpload upload)
+        bool DoUpdate;
+        RectangleI? UpdateBounds;
+
+        public Layer(SKBitmap image)
         {
-            Sprite = sprite;
-            Image = image;
-            Upload = upload;
+            RelativeSizeAxes = Axes.Both;
+            InternalChild = Sprite = new Sprite() { RelativeSizeAxes = Axes.Both };
+
+            IsVisible.ValueChanged += e => Alpha = e.NewValue ? 1 : 0;
+
+            Image = null!; Canvas = null!; Upload = null!;
+            SetImage(image);
         }
 
-        public Rgba32 this[int x, int y] { get => Image[x, y]; set => Image[x, y] = value; }
+        public SKColor this[int x, int y] { get => Image.GetPixel(x, y); set => Image.SetPixel(x, y, value); }
 
+        public void SetImage(SKBitmap image, bool update = true)
+        {
+            Image = image;
+            Canvas = new SKCanvas(image);
+            Upload = new SkiaTextureUpload(image);
+
+            Sprite.Texture = new Texture(image.Width, image.Height, true, osuTK.Graphics.ES30.All.Nearest);
+            Sprite.Texture.TextureGL.BypassTextureUploadQueueing = true;
+
+            if (update) ForceUpdate();
+        }
+
+        protected override void Update()
+        {
+            if (DoUpdate) ForceUpdate(UpdateBounds);
+            base.Update();
+        }
+
+        void ForceUpdate(RectangleI? bounds = null)
+        {
+            if (!bounds.HasValue) Sprite.Texture.SetData(Upload);
+            else
+            {
+                var b = Upload.Bounds;
+                Upload.Bounds = bounds.Value;
+                Sprite.Texture.SetData(Upload);
+
+                Upload.Bounds = b;
+            }
+
+            DoUpdate = false;
+            UpdateBounds = null;
+        }
         public void ScheduleUpdate(RectangleI? bounds = null)
         {
             DoUpdate = true;

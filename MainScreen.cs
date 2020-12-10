@@ -14,6 +14,7 @@ using osu.Framework.IO.Stores;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Advanced;
 using SixLabors.ImageSharp.PixelFormats;
+using SkiaSharp;
 
 namespace DeloP
 {
@@ -59,10 +60,10 @@ namespace DeloP
         {
             string? openedPath = null;
 
-            static void save(Image<Rgba32> image, string file)
+            static void save(SKBitmap image, string file)
             {
                 using var stream = File.OpenWrite(file);
-                image.SaveAsPng(stream);
+                image.Encode(stream, SKEncodedImageFormat.Png, 9);
             }
             void clickNew()
             {
@@ -77,7 +78,7 @@ namespace DeloP
                     try
                     {
                         FullCanvas.Canvas.Image.Clear();
-                        FullCanvas.Canvas.Image.AddLayer(Image.Load<Rgba32>(e.NewValue.FullName));
+                        FullCanvas.Canvas.Image.AddLayer(SKBitmap.FromImage(SKImage.FromEncodedData(File.OpenWrite(e.NewValue.FullName))));
                         openedPath = e.NewValue.FullName;
 
                         Schedule(() => Remove(selector));
