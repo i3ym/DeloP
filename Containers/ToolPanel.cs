@@ -260,8 +260,8 @@ namespace DeloP.Containers
                 {
                     if (base.OnMouseDown(e)) return true;
 
-                    if (e.Button == MouseButton.Left) Canvas.MainColor = new SKColor(Color.ToRGBA());
-                    else if (e.Button == MouseButton.Right) Canvas.SecondaryColor = new SKColor(Color.ToRGBA());
+                    if (e.Button == MouseButton.Left) Canvas.MainColor = new SKColor(Color.ToARGB());
+                    else if (e.Button == MouseButton.Right) Canvas.SecondaryColor = new SKColor(Color.ToARGB());
 
                     return false;
                 }

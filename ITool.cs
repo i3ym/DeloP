@@ -30,12 +30,30 @@ namespace DeloP
         protected readonly FullCanvas FullCanvas;
 
         protected Tool(FullCanvas fullCanvas) => FullCanvas = fullCanvas;
+
+        protected virtual SKPaint CreatePaint() => CreatePaint(FullCanvas.Canvas.MainColor);
+        protected virtual SKPaint CreatePaint(SKColor color) => new SKPaint() { Color = color, IsStroke = true };
     }
     public abstract class ThicknessTool : Tool
     {
         public int Thickness { get; set; } = 1;
 
         protected ThicknessTool(FullCanvas fullCanvas) : base(fullCanvas) { }
+
+        protected override SKPaint CreatePaint()
+        {
+            var paint = base.CreatePaint();
+            paint.StrokeWidth = Thickness;
+
+            return paint;
+        }
+        protected override SKPaint CreatePaint(SKColor color)
+        {
+            var paint = base.CreatePaint(color);
+            paint.StrokeWidth = Thickness;
+
+            return paint;
+        }
     }
 
     public class PencilTool : ThicknessTool, IThicknessTool
@@ -52,7 +70,7 @@ namespace DeloP
 
         void DrawLine(int sx, int sy, int ex, int ey, Canvas Canvas, SKColor color)
         {
-            ShapeTool.DrawLine(sx, sy, ex, ey, Canvas.Image.ActiveCanvas, color, Thickness);
+            Canvas.Image.ActiveCanvas.DrawLine(sx, sy, ex, ey, CreatePaint(color));
             Canvas.Image.UpdateActiveLayer(new RectangleI(sx - Thickness, sy - Thickness, ex + Thickness, ey + Thickness));
         }
     }
@@ -70,7 +88,7 @@ namespace DeloP
 
         void DrawLine(int sx, int sy, int ex, int ey, Canvas Canvas)
         {
-            ShapeTool.DrawLine(sx, sy, ex, ey, Canvas.Image.ActiveCanvas, Canvas.SecondaryColor, Thickness);
+            Canvas.Image.ActiveCanvas.DrawLine(sx, sy, ex, ey, CreatePaint(Canvas.SecondaryColor));
             Canvas.Image.UpdateActiveLayer(new RectangleI(sx - Thickness, sy - Thickness, ex + Thickness, ey + Thickness));
         }
         void DrawLineReplace(int sx, int sy, int ex, int ey, Canvas Canvas)
@@ -186,9 +204,9 @@ namespace DeloP
         protected abstract void DrawOverride(int startX, int startY, int endX, int endY, SKCanvas image, SKColor color);
 
 
-        public static void DrawLine(int startX, int startY, int endX, int endY, SKCanvas image, SKColor color, float thickness)
+        public void DrawLine(int startX, int startY, int endX, int endY, SKCanvas image, SKColor color, float thickness)
         {
-            image.DrawLine(startX, startY, endX, endY, new SKPaint() { Color = color, IsAntialias = false, StrokeWidth = thickness });
+            image.DrawLine(startX, startY, endX, endY, CreatePaint(color));
             image.Flush();
         }
     }
@@ -208,14 +226,8 @@ namespace DeloP
     {
         public RectangleTool(FullCanvas fullCanvas) : base(fullCanvas) { }
 
-        protected override void DrawOverride(int startX, int startY, int endX, int endY, SKCanvas image, SKColor color)
-        {
-            DrawLine(startX, startY, endX, startY, image, color, Thickness);
-            DrawLine(startX, endY, endX, endY, image, color, Thickness);
-
-            DrawLine(startX, startY, startX, endY, image, color, Thickness);
-            DrawLine(endX, startY, endX, endY, image, color, Thickness);
-        }
+        protected override void DrawOverride(int startX, int startY, int endX, int endY, SKCanvas image, SKColor color) =>
+            image.DrawRect(startX, startY, endX - startX, endY - startY, CreatePaint(color));
     }
     public class TriangleTool : PolygonShapeTool
     {
@@ -223,9 +235,11 @@ namespace DeloP
 
         protected override void DrawOverride(int startX, int startY, int endX, int endY, SKCanvas image, SKColor color)
         {
-            DrawLine(startX, endY, (endX - startX) / 2 + startX, startY, image, color, Thickness);
-            DrawLine((endX - startX) / 2 + startX, startY, endX, endY, image, color, Thickness);
-            DrawLine(startX, endY, endX, endY, image, color, Thickness);
+            var paint = CreatePaint(color);
+
+            image.DrawLine(startX, endY, (endX - startX) / 2 + startX, startY, paint);
+            image.DrawLine((endX - startX) / 2 + startX, startY, endX, endY, paint);
+            image.DrawLine(startX, endY, endX, endY, paint);
         }
     }
     public class LineTool : ShapeTool
@@ -233,7 +247,7 @@ namespace DeloP
         public LineTool(FullCanvas fullCanvas) : base(fullCanvas) { }
 
         protected override void DrawOverride(int startX, int startY, int endX, int endY, SKCanvas image, SKColor color) =>
-            DrawLine(startX, startY, endX, endY, image, color, Thickness);
+            image.DrawLine(startX, startY, endX, endY, CreatePaint(color));
     }
 
     public class FillTool : Tool, ITool
